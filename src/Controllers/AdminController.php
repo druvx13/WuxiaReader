@@ -242,6 +242,16 @@ class AdminController
     }
 
     /**
+     * Initiates the import process for ReadNovelFull.com.
+     *
+     * @return void
+     */
+    public function importReadnovelfull()
+    {
+        $this->importGeneric('readnovelfull');
+    }
+
+    /**
      * Generic handler for importing novels from a specified source.
      *
      * Validates input parameters and performs the scraping/import process,
@@ -259,6 +269,7 @@ class AdminController
         require_once __DIR__ . '/../Services/fanmtl_scraper.php';
         require_once __DIR__ . '/../Services/novelhall_scraper.php';
         require_once __DIR__ . '/../Services/allnovel_scraper.php';
+        require_once __DIR__ . '/../Services/readnovelfull_scraper.php';
 
         $errors = [];
         $url = $_POST['url'] ?? '';
@@ -272,6 +283,8 @@ class AdminController
             $throttleDefault = NOVELHALL_MINIMUM_THROTTLE;
         } elseif ($source === 'allnovel') {
             $throttleDefault = ALLNOVEL_MINIMUM_THROTTLE;
+        } elseif ($source === 'readnovelfull') {
+            $throttleDefault = READNOVELFULL_MINIMUM_THROTTLE;
         }
         $throttle = $_POST['throttle'] ?? (string)$throttleDefault;
         $preserve = isset($_POST['preserve_titles']);
@@ -337,6 +350,16 @@ class AdminController
                         );
                     } elseif ($source === 'novelhall') {
                         $newId = novelhall_import_to_db(
+                            $pdo,
+                            $url,
+                            $startInt,
+                            $endInt,
+                            $thrFloat,
+                            !empty($preserve),
+                            $logger
+                        );
+                    } elseif ($source === 'readnovelfull') {
+                        $newId = readnovelfull_import_to_db(
                             $pdo,
                             $url,
                             $startInt,
