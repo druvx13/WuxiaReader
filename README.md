@@ -37,8 +37,8 @@ The project follows a custom MVC (Model-View-Controller) architecture:
 
 1.  **Clone the repository:**
     ```bash
-    git clone <repository_url>
-    cd <repository_folder>
+    git clone https://github.com/druvx13/WuxiaReader.git
+    cd WuxiaReader
     ```
 
 2.  **Configure the database:**
