@@ -5,8 +5,6 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/db.php';
-
 const NOVELHALL_ALLOWED_HOSTS = array(
     'novelhall.com',
     'www.novelhall.com'
