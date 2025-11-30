@@ -47,6 +47,8 @@ $router->add('ANY', '/admin/add-novel', [AdminController::class, 'addNovel']);
 $router->add('ANY', '/admin/add-chapter', [AdminController::class, 'addChapter']);
 $router->add('ANY', '/admin/import-fanmtl', [AdminController::class, 'importFanmtl']);
 $router->add('ANY', '/admin/import-novelhall', [AdminController::class, 'importNovelhall']);
+$router->add('ANY', '/admin/import-allnovel', [AdminController::class, 'importAllnovel']);
+$router->add('ANY', '/admin/import-readnovelfull', [AdminController::class, 'importReadnovelfull']);
 
 // Dispatch
 $router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);

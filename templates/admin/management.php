@@ -35,6 +35,18 @@ $base = Config::get('BASE_URL');
                 <p>Import a novel and chapters from novelhall.com.</p>
                 <a href="<?= $base ?>/admin/import-novelhall" class="btn btn--admin">Go to Novelhall Import</a>
             </article>
+
+            <article class="card card--admin">
+                <h2>Import: AllNovel.org</h2>
+                <p>Import a novel and chapters from allnovel.org.</p>
+                <a href="<?= $base ?>/admin/import-allnovel" class="btn btn--admin">Go to AllNovel Import</a>
+            </article>
+
+            <article class="card card--admin">
+                <h2>Import: ReadNovelFull.com</h2>
+                <p>Import a novel and chapters from readnovelfull.com.</p>
+                <a href="<?= $base ?>/admin/import-readnovelfull" class="btn btn--admin">Go to ReadNovelFull Import</a>
+            </article>
         </div>
     </section>
     <style>
