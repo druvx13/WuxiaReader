@@ -232,6 +232,16 @@ class AdminController
     }
 
     /**
+     * Initiates the import process for Novelfull and clones.
+     *
+     * @return void
+     */
+    public function importNovelfull()
+    {
+        $this->importGeneric('novelfull');
+    }
+
+    /**
      * Generic handler for importing novels from a specified source.
      *
      * Validates input parameters and performs the scraping/import process,
@@ -248,13 +258,21 @@ class AdminController
         // Require scraper functions
         require_once __DIR__ . '/../Services/fanmtl_scraper.php';
         require_once __DIR__ . '/../Services/novelhall_scraper.php';
+        require_once __DIR__ . '/../Services/novelfull_scraper.php';
 
         $errors = [];
         $url = $_POST['url'] ?? '';
         $start = $_POST['start'] ?? '1';
         $end = $_POST['end'] ?? '';
 
-        $throttleDefault = $source === 'fanmtl' ? FMTL_MINIMUM_THROTTLE : NOVELHALL_MINIMUM_THROTTLE;
+        $throttleDefault = 1.0;
+        if ($source === 'fanmtl') {
+            $throttleDefault = FMTL_MINIMUM_THROTTLE;
+        } elseif ($source === 'novelhall') {
+            $throttleDefault = NOVELHALL_MINIMUM_THROTTLE;
+        } elseif ($source === 'novelfull') {
+            $throttleDefault = NOVELFULL_MINIMUM_THROTTLE;
+        }
         $throttle = $_POST['throttle'] ?? (string)$throttleDefault;
         $preserve = isset($_POST['preserve_titles']);
 
@@ -317,8 +335,19 @@ class AdminController
                             !empty($preserve),
                             $logger
                         );
-                    } else {
+                    } elseif ($source === 'novelhall') {
                         $newId = novelhall_import_to_db(
+                            $pdo,
+                            $url,
+                            $startInt,
+                            $endInt,
+                            $thrFloat,
+                            !empty($preserve),
+                            $logger
+                        );
+                    } else {
+                        // novelfull
+                        $newId = novelfull_import_to_db(
                             $pdo,
                             $url,
                             $startInt,
