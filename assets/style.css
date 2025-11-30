@@ -1,0 +1,596 @@
+/* Base */
+
+:root {
+    --bg: #fdfdfd;
+    --text: #121212;
+    --muted: #777;
+    --border: #dadada;
+    --accent: #c0362c;
+    --accent-soft: #ffe5e0;
+    --card-bg: #ffffff;
+    --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #1a1a1a;
+        --text: #e0e0e0;
+        --muted: #9a9a9a;
+        --border: #333;
+        --accent: #ff6b5a;
+        --accent-soft: #40201b;
+        --card-bg: #111;
+        --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.8);
+    }
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+img {
+    max-width: 100%;
+    display: block;
+}
+
+/* Layout */
+
+.site-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: rgba(253, 253, 253, 0.96);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+}
+
+@media (prefers-color-scheme: dark) {
+    .site-header {
+        background: rgba(26, 26, 26, 0.96);
+    }
+}
+
+.site-header__inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0.7rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.logo {
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-size: 0.95rem;
+}
+
+.nav {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.9rem;
+}
+
+.nav__admin {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.auth {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.85rem;
+}
+
+.auth__user {
+    color: var(--muted);
+}
+
+.auth__form {
+    margin: 0;
+}
+
+.auth__form button {
+    border: 1px solid var(--border);
+    background: transparent;
+    padding: 0.3rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+.site-main {
+    max-width: 1100px;
+    margin: 1.5rem auto 3rem;
+    padding: 0 1rem 0;
+}
+
+/* Home – novel list */
+
+.novel-list-page h1 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.novel-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 1.2rem;
+}
+
+.novel-card {
+    background: var(--card-bg);
+    border-radius: 18px;
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+    transition: transform 0.12s ease-out, box-shadow 0.12s ease-out;
+}
+
+.novel-card__link {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.novel-card__cover img,
+.cover-placeholder {
+    width: 100%;
+    height: 260px;
+    object-fit: cover;
+}
+
+.cover-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    color: var(--muted);
+    background: linear-gradient(135deg, #f0f0f0, #e0e0e0);
+}
+
+@media (prefers-color-scheme: dark) {
+    .cover-placeholder {
+        background: linear-gradient(135deg, #262626, #343434);
+    }
+}
+
+.novel-card__body {
+    padding: 0.9rem 0.9rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.novel-card__body h2 {
+    font-size: 1.0rem;
+    margin: 0;
+}
+
+.novel-card__author {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin: 0;
+}
+
+.novel-card__desc {
+    font-size: 0.85rem;
+    margin: 0.2rem 0 0;
+    color: var(--muted);
+}
+
+.novel-card__chapters {
+    margin-top: auto;
+    font-size: 0.8rem;
+    color: var(--muted);
+}
+
+.novel-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+}
+
+/* Novel page */
+
+.novel-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.4rem;
+}
+
+.novel-header {
+    display: grid;
+    grid-template-columns: 200px minmax(0, 1fr);
+    gap: 1rem;
+}
+
+@media (max-width: 720px) {
+    .novel-header {
+        grid-template-columns: 1fr;
+    }
+}
+
+.novel-header__cover img,
+.novel-header__cover .cover-placeholder {
+    border-radius: 16px;
+    height: auto;
+}
+
+.novel-header__meta h1 {
+    margin: 0 0 0.3rem;
+    font-size: 1.5rem;
+}
+
+.novel-header__author {
+    margin: 0 0 0.7rem;
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.tags {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 0.8rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.tags li {
+    font-size: 0.75rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+}
+
+.novel-description h2 {
+    font-size: 1.1rem;
+    margin-bottom: 0.4rem;
+}
+
+.novel-description p {
+    margin-top: 0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+/* Chapters list */
+
+.novel-chapters details {
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    padding: 0.6rem 0.9rem 0.8rem;
+    background: var(--card-bg);
+}
+
+.novel-chapters summary {
+    cursor: pointer;
+    list-style: none;
+    font-weight: 600;
+}
+
+.novel-chapters summary::-webkit-details-marker {
+    display: none;
+}
+
+.chapter-list {
+    list-style: none;
+    padding: 0.4rem 0 0;
+    margin: 0.3rem 0 0;
+    border-top: 1px dashed var(--border);
+}
+
+.chapter-list li {
+    margin: 0;
+    padding: 0.2rem 0;
+    font-size: 0.9rem;
+}
+
+/* Chapter page */
+
+.chapter-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.3rem;
+}
+
+.chapter-header__nav {
+    margin-bottom: 0.2rem;
+    font-size: 0.85rem;
+}
+
+.chapter-header__novel-link {
+    color: var(--muted);
+}
+
+.chapter-header h1 {
+    margin: 0 0 0.5rem;
+    font-size: 1.5rem;
+}
+
+.chapter-header__controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+    justify-content: space-between;
+}
+
+.chapter-nav {
+    display: flex;
+    gap: 0.4rem;
+}
+
+.chapter-nav__btn {
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    padding: 0.3rem 0.7rem;
+    font-size: 0.8rem;
+    background: transparent;
+}
+
+.chapter-content {
+    display: flex;
+    justify-content: center;
+}
+
+.chapter-text {
+    font-family: "Lora", "Georgia", serif;
+    line-height: 1.6;
+    max-width: 700px;
+    font-size: 1.0rem;
+}
+
+/* Distraction free */
+
+body.distraction-free .site-header,
+body.distraction-free .comments-block,
+body.distraction-free .chapter-header__controls .chapter-nav,
+body.distraction-free .chapter-header__controls .like-wrapper {
+    display: none;
+}
+
+body.distraction-free .chapter-content {
+    margin-top: 1rem;
+}
+
+.distraction-toggle {
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    font-size: 0.8rem;
+    padding: 0.3rem 0.65rem;
+    background: transparent;
+    cursor: pointer;
+}
+
+/* Like button */
+
+.like-wrapper {
+    display: flex;
+}
+
+.like-button {
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    padding: 0.25rem 0.7rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    background: transparent;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    transition: background 0.15s ease-out, border-color 0.15s ease-out, transform 0.12s ease-out;
+}
+
+.like-button__icon {
+    font-size: 0.9rem;
+    display: inline-block;
+    min-width: 1em;
+    text-align: center;
+}
+
+.like-button__count {
+    font-variant-numeric: tabular-nums;
+}
+
+.like-button--active {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    transform: translateY(-1px);
+}
+
+/* Comments */
+
+.comments-block {
+    margin-top: 1rem;
+    border-radius: 16px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    padding: 0.8rem 0.9rem 1rem;
+}
+
+.comments-header h2 {
+    margin: 0 0 0.6rem;
+    font-size: 1rem;
+}
+
+.comments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-bottom: 0.6rem;
+}
+
+.comment {
+    padding: 0.35rem 0.1rem;
+    border-bottom: 1px dashed var(--border);
+}
+
+.comment:last-child {
+    border-bottom: none;
+}
+
+.comment__meta {
+    display: flex;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+}
+
+.comment__author {
+    font-weight: 600;
+}
+
+.comment__text {
+    margin: 0.1rem 0 0;
+    font-size: 0.9rem;
+}
+
+.comment-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.comment-form textarea {
+    resize: vertical;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    padding: 0.4rem 0.5rem;
+    font-size: 0.9rem;
+    font-family: inherit;
+    background: transparent;
+    color: inherit;
+}
+
+.comment-form button {
+    align-self: flex-end;
+    border-radius: 999px;
+    border: none;
+    padding: 0.3rem 0.8rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    background: var(--accent);
+    color: white;
+}
+
+.comments-login-hint {
+    font-size: 0.85rem;
+    color: var(--muted);
+}
+
+/* Forms */
+
+.form {
+    max-width: 380px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+}
+
+.form label {
+    font-size: 0.9rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.form input,
+.form select,
+.form textarea {
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    padding: 0.4rem 0.5rem;
+    font-size: 0.9rem;
+    background: transparent;
+    color: inherit;
+    font-family: inherit;
+}
+
+.form button {
+    border-radius: 999px;
+    border: none;
+    padding: 0.4rem 0.9rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    background: var(--accent);
+    color: white;
+}
+
+/* Admin form */
+
+.form--admin {
+    max-width: 700px;
+}
+
+.textarea--mono {
+    font-family: "JetBrains Mono", "SF Mono", Menlo, monospace;
+}
+
+.btn--admin {
+    background: var(--accent);
+}
+
+/* Auth pages */
+
+.auth-page h1 {
+    margin-top: 0;
+    margin-bottom: 0.8rem;
+}
+
+.alert {
+    border-radius: 10px;
+    padding: 0.6rem 0.7rem;
+    font-size: 0.85rem;
+    margin-bottom: 0.7rem;
+}
+
+.alert--error {
+    border: 1px solid #d33;
+    background: rgba(211, 51, 51, 0.06);
+}
+
+/* Admin page */
+
+.admin-page h1 {
+    margin-top: 0;
+}
+
+/* Utility */
+
+@media (max-width: 540px) {
+    .site-header__inner {
+        flex-wrap: wrap;
+        align-items: flex-start;
+    }
+
+    .nav {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .auth {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}
