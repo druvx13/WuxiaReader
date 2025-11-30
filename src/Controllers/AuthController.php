@@ -5,8 +5,21 @@ namespace App\Controllers;
 use App\Core\View;
 use App\Models\User;
 
+/**
+ * AuthController
+ *
+ * Handles user authentication including login, signup, and logout.
+ */
 class AuthController
 {
+    /**
+     * Handles the user login process.
+     *
+     * Processes the login form submission. If credentials are valid,
+     * starts a user session and redirects to home. Otherwise, displays an error.
+     *
+     * @return void
+     */
     public function login()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -27,6 +40,14 @@ class AuthController
         View::render('login');
     }
 
+    /**
+     * Handles the user signup process.
+     *
+     * Processes the registration form. Validates input and creates a new user
+     * if the username is unique and passwords match.
+     *
+     * @return void
+     */
     public function signup()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -65,6 +86,13 @@ class AuthController
         View::render('signup');
     }
 
+    /**
+     * Handles user logout.
+     *
+     * Destroys the current session and redirects to the home page.
+     *
+     * @return void
+     */
     public function logout()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {

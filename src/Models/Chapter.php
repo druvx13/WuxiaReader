@@ -5,8 +5,20 @@ namespace App\Models;
 use App\Core\Database;
 use PDO;
 
+/**
+ * Chapter
+ *
+ * Represents a chapter of a novel. Provides methods for retrieving, creating,
+ * and navigating chapters.
+ */
 class Chapter
 {
+    /**
+     * Finds all chapters for a specific novel.
+     *
+     * @param int $novelId The ID of the novel.
+     * @return array List of chapters (id, title, order_index) ordered by index.
+     */
     public static function findByNovelId($novelId)
     {
         $pdo = Database::connect();
@@ -15,6 +27,14 @@ class Chapter
         return $stmt->fetchAll();
     }
 
+    /**
+     * Finds a chapter by its ID.
+     *
+     * Also retrieves the associated novel title and ID.
+     *
+     * @param int $id The ID of the chapter.
+     * @return array|false The chapter data or false if not found.
+     */
     public static function find($id)
     {
         $pdo = Database::connect();
@@ -28,6 +48,12 @@ class Chapter
         return $stmt->fetch();
     }
 
+    /**
+     * Calculates the next available order index for a novel's chapters.
+     *
+     * @param int $novelId The ID of the novel.
+     * @return int The next order index (max index + 1).
+     */
     public static function getNextOrderIndex($novelId)
     {
         $pdo = Database::connect();
@@ -36,6 +62,15 @@ class Chapter
         return (int)$stmt->fetch()['next_idx'];
     }
 
+    /**
+     * Creates a new chapter.
+     *
+     * @param int    $novelId    The ID of the novel.
+     * @param string $title      The title of the chapter.
+     * @param string $content    The content of the chapter.
+     * @param int    $orderIndex The order index of the chapter.
+     * @return string|false The ID of the created chapter or false on failure.
+     */
     public static function create($novelId, $title, $content, $orderIndex)
     {
         $pdo = Database::connect();
@@ -47,6 +82,13 @@ class Chapter
         return $pdo->lastInsertId();
     }
 
+    /**
+     * Finds the previous chapter in the sequence.
+     *
+     * @param int $novelId           The ID of the novel.
+     * @param int $currentOrderIndex The order index of the current chapter.
+     * @return array|false The previous chapter data (id, title, order_index) or false if none exists.
+     */
     public static function findPrevious($novelId, $currentOrderIndex)
     {
         $pdo = Database::connect();
@@ -61,6 +103,13 @@ class Chapter
         return $stmt->fetch();
     }
 
+    /**
+     * Finds the next chapter in the sequence.
+     *
+     * @param int $novelId           The ID of the novel.
+     * @param int $currentOrderIndex The order index of the current chapter.
+     * @return array|false The next chapter data (id, title, order_index) or false if none exists.
+     */
     public static function findNext($novelId, $currentOrderIndex)
     {
         $pdo = Database::connect();

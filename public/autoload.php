@@ -1,5 +1,11 @@
 <?php
 
+/**
+ * Autoloader
+ *
+ * Registers a simple PSR-4 compliant autoloader for the "App" namespace.
+ * It maps the namespace "App\" to the "src/" directory.
+ */
 spl_autoload_register(function ($class) {
     // Project-specific namespace prefix
     $prefix = 'App\\';

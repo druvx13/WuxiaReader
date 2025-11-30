@@ -9,8 +9,21 @@ use App\Models\Novel;
 use App\Models\Chapter;
 use finfo;
 
+/**
+ * AdminController
+ *
+ * Handles administrative tasks such as adding novels, adding chapters,
+ * and importing novels from external sources.
+ */
 class AdminController
 {
+    /**
+     * Ensures that the current user is an administrator.
+     *
+     * Redirects or exits with 403 Forbidden if not authorized.
+     *
+     * @return array|null The current user data if authorized.
+     */
     private function requireAdmin()
     {
         $currentUser = null;
@@ -26,12 +39,25 @@ class AdminController
         return $currentUser;
     }
 
+    /**
+     * Displays the main management dashboard for admins.
+     *
+     * @return void
+     */
     public function management()
     {
         $currentUser = $this->requireAdmin();
         View::render('admin/management', ['current_user' => $currentUser]);
     }
 
+    /**
+     * Handles the addition of a new novel.
+     *
+     * Processes the form submission for creating a novel, including cover image upload.
+     * Renders the add novel form if not a POST request or if there are validation errors.
+     *
+     * @return void
+     */
     public function addNovel()
     {
         $currentUser = $this->requireAdmin();
@@ -122,6 +148,14 @@ class AdminController
         ]);
     }
 
+    /**
+     * Handles the addition of a new chapter to an existing novel.
+     *
+     * Processes the form submission for creating a chapter.
+     * Renders the add chapter form if not a POST request or if there are validation errors.
+     *
+     * @return void
+     */
     public function addChapter()
     {
         $currentUser = $this->requireAdmin();
@@ -177,16 +211,35 @@ class AdminController
         ]);
     }
 
+    /**
+     * Initiates the import process for FanMTL.
+     *
+     * @return void
+     */
     public function importFanmtl()
     {
         $this->importGeneric('fanmtl');
     }
 
+    /**
+     * Initiates the import process for NovelHall.
+     *
+     * @return void
+     */
     public function importNovelhall()
     {
         $this->importGeneric('novelhall');
     }
 
+    /**
+     * Generic handler for importing novels from a specified source.
+     *
+     * Validates input parameters and performs the scraping/import process,
+     * streaming the log output to the client.
+     *
+     * @param string $source The source identifier ('fanmtl' or 'novelhall').
+     * @return void
+     */
     private function importGeneric($source)
     {
         $currentUser = $this->requireAdmin();

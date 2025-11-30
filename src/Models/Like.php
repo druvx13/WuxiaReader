@@ -5,8 +5,20 @@ namespace App\Models;
 use App\Core\Database;
 use PDO;
 
+/**
+ * Like
+ *
+ * Manages user likes (upvotes) for novels and chapters.
+ */
 class Like
 {
+    /**
+     * Counts the total number of likes for a target.
+     *
+     * @param string $targetType The type of the target ('novel' or 'chapter').
+     * @param int    $targetId   The ID of the target.
+     * @return int The total count of likes.
+     */
     public static function count($targetType, $targetId)
     {
         $pdo = Database::connect();
@@ -15,6 +27,14 @@ class Like
         return (int)$stmt->fetch()['c'];
     }
 
+    /**
+     * Checks if a user has liked a specific target.
+     *
+     * @param string   $targetType The type of the target ('novel' or 'chapter').
+     * @param int      $targetId   The ID of the target.
+     * @param int|null $userId     The ID of the user (or null if not logged in).
+     * @return bool True if the user has liked the target, false otherwise.
+     */
     public static function isLikedByUser($targetType, $targetId, $userId)
     {
         if (!$userId) return false;
@@ -24,6 +44,19 @@ class Like
         return (bool)$stmt->fetch();
     }
 
+    /**
+     * Toggles the like status for a user and target.
+     *
+     * If the user has already liked the target, the like is removed.
+     * If not, the like is added.
+     * Operations are performed within a transaction to ensure consistency.
+     *
+     * @param int    $userId     The ID of the user.
+     * @param string $targetType The type of the target ('novel' or 'chapter').
+     * @param int    $targetId   The ID of the target.
+     * @return array An associative array with 'liked' (bool) and 'count' (int).
+     * @throws \Exception If the database operation fails.
+     */
     public static function toggle($userId, $targetType, $targetId)
     {
         $pdo = Database::connect();

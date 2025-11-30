@@ -14,6 +14,15 @@ const NOVELHALL_MINIMUM_THROTTLE = 3.0; // seconds
 
 /* ---------------- utilities ---------------- */
 
+/**
+ * Performs an HTTP GET request using cURL.
+ *
+ * @param string $url     The URL to fetch.
+ * @param array  $headers Optional HTTP headers to send.
+ * @param int    $timeout Request timeout in seconds.
+ * @return string The response body.
+ * @throws RuntimeException If the request fails or returns an error status.
+ */
 function nh_http_get(string $url, array $headers = array(), int $timeout = 60): string {
     $ch = curl_init();
     curl_setopt_array($ch, array(
@@ -41,12 +50,26 @@ function nh_http_get(string $url, array $headers = array(), int $timeout = 60): 
     return $resp;
 }
 
+/**
+ * Pauses execution for a specified number of seconds to throttle requests.
+ *
+ * @param float $seconds The number of seconds to sleep.
+ * @return void
+ */
 function nh_throttle(float $seconds): void {
     if ($seconds > 0) {
         usleep((int)($seconds * 1000000));
     }
 }
 
+/**
+ * Loads HTML content into a DOMDocument and creates a DOMXPath.
+ *
+ * Suppresses standard libxml errors during loading.
+ *
+ * @param string $html The HTML content string.
+ * @return array{DOMDocument, DOMXPath} The loaded document and XPath object.
+ */
 function nh_load_dom(string $html): array {
     libxml_use_internal_errors(true);
     $doc = new DOMDocument();
@@ -56,6 +79,14 @@ function nh_load_dom(string $html): array {
     return array($doc, $xpath);
 }
 
+/**
+ * Removes DOM nodes matching an XPath expression.
+ *
+ * @param DOMXPath     $xpath   The XPath object to use for querying.
+ * @param string       $expr    The XPath expression to match nodes.
+ * @param DOMNode|null $context The context node for the query (optional).
+ * @return void
+ */
 function nh_remove_nodes_by_xpath(DOMXPath $xpath, string $expr, ?DOMNode $context = null): void {
     $nodes = $xpath->query($expr, $context);
     if (!$nodes) {
@@ -68,6 +99,12 @@ function nh_remove_nodes_by_xpath(DOMXPath $xpath, string $expr, ?DOMNode $conte
     }
 }
 
+/**
+ * Retrieves the inner HTML of a DOMNode.
+ *
+ * @param DOMNode $node The node to get inner HTML from.
+ * @return string The inner HTML string.
+ */
 function nh_inner_html(DOMNode $node): string {
     $html = '';
     foreach ($node->childNodes as $child) {
@@ -76,6 +113,15 @@ function nh_inner_html(DOMNode $node): string {
     return $html;
 }
 
+/**
+ * Resolves a relative URL against a base URL.
+ *
+ * Handles absolute URLs, protocol-relative URLs, and relative paths.
+ *
+ * @param string $base The base URL.
+ * @param string $rel  The relative URL to resolve.
+ * @return string The absolute URL.
+ */
 function nh_url_join(string $base, string $rel): string {
     if (preg_match('#^https?://#i', $rel)) {
         return $rel;
@@ -112,6 +158,12 @@ function nh_url_join(string $base, string $rel): string {
     return $abs;
 }
 
+/**
+ * Strips common chapter prefixes (e.g., "Chapter 1: ") from a title.
+ *
+ * @param string $title The original chapter title.
+ * @return string The cleaned title.
+ */
 function nh_strip_leading_chapter_prefix(string $title): string {
     $t = preg_replace('/^\s*(?:Chapter|Chap|Ch)[\s\.\-:]*\d+[\s\.\-:]*\s*/i', '', $title);
     $t = preg_replace('/^\s*\d{1,4}[\.\)\-:\s]+\s*/', '', $t);
@@ -119,7 +171,13 @@ function nh_strip_leading_chapter_prefix(string $title): string {
 }
 
 /**
- * Clean small HTML fragment, remove obvious junk (ads, scripts) but keep structural tags.
+ * Cleans an HTML fragment by removing scripts, styles, ads, and comments.
+ *
+ * Also resolves relative URLs in src and href attributes.
+ *
+ * @param string $html    The HTML fragment to clean.
+ * @param string $baseUrl The base URL for resolving relative links.
+ * @return string The cleaned HTML.
  */
 function nh_clean_fragment_html(string $html, string $baseUrl = ''): string {
     list($doc, $xpath) = nh_load_dom($html);
@@ -154,15 +212,14 @@ function nh_clean_fragment_html(string $html, string $baseUrl = ''): string {
 /* ---------------- Novelhall TOC helpers ---------------- */
 
 /**
- * JS equivalent:
- *   let chapters = [...dom.querySelectorAll("div.book-catalog")]
- *        .map(c => [...c.querySelectorAll("a")])
- *        .reduce((a, c) => a.length < c.length ? c : a, [])
- *        .map(a => util.hyperLinkToChapter(a));
+ * Extracts the chapter list from the novel page.
  *
- * Here:
- * - choose the div.book-catalog with the most <a> children
- * - each <a> becomes a chapter { name, url }.
+ * Heuristic: Finds the `div.book-catalog` element with the most anchor tags,
+ * assuming it is the main chapter list.
+ *
+ * @param DOMDocument $doc     The DOMDocument of the novel page.
+ * @param string      $baseUrl The base URL for resolving relative links.
+ * @return array List of chapters, each as ['name' => string, 'url' => string].
  */
 function nh_extract_chapter_list(DOMDocument $doc, string $baseUrl): array {
     $xpath = new DOMXPath($doc);
@@ -212,9 +269,11 @@ function nh_extract_chapter_list(DOMDocument $doc, string $baseUrl): array {
 /* ---------------- chapter page ---------------- */
 
 /**
- * NovelhallParser:
- *   findContent(dom)      => article div.entry-content
- *   findChapterTitle(dom) => article div.single-header h1
+ * Fetches and parses the content of a single chapter from NovelHall.
+ *
+ * @param string $url      The URL of the chapter.
+ * @param float  $throttle Minimum delay between requests.
+ * @return array Associative array with 'title' and 'content'.
  */
 function novelhall_fetch_chapter_content(string $url, float $throttle = NOVELHALL_MINIMUM_THROTTLE): array {
     if ($throttle < NOVELHALL_MINIMUM_THROTTLE) {
@@ -254,12 +313,12 @@ function novelhall_fetch_chapter_content(string $url, float $throttle = NOVELHAL
 /* ---------------- novel page ---------------- */
 
 /**
- * NovelhallParser:
- *   extractTitleImpl(dom)          => div.book-info h1
- *   extractAuthor(dom)             => meta[property='books:author']
- *   findCoverImageUrl(dom)         => util.getFirstImgSrc(dom, "div.book-img")
- *   getInformationEpubItemChildNodes(dom) => div.book-info div.intro
- *   getChapterUrls(dom)            => div.book-catalog logic above
+ * Parses the main novel page to extract metadata and chapters from NovelHall.
+ *
+ * @param string        $url      The URL of the novel page.
+ * @param float         $throttle Minimum delay between requests.
+ * @param callable|null $log      Optional callback for logging.
+ * @return array Associative array containing novel metadata and list of chapters.
  */
 function novelhall_parse_novel_page(string $url, float $throttle = NOVELHALL_MINIMUM_THROTTLE, ?callable $log = null): array {
     if ($throttle < NOVELHALL_MINIMUM_THROTTLE) {

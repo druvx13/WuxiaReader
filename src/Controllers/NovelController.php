@@ -9,8 +9,22 @@ use App\Models\Comment;
 use App\Models\Like;
 use App\Models\User;
 
+/**
+ * NovelController
+ *
+ * Handles display and interaction with novels and chapters, including
+ * viewing details, reading chapters, liking, and commenting.
+ */
 class NovelController
 {
+    /**
+     * Displays a specific novel's details.
+     *
+     * Shows the novel's cover, description, chapters list, comments, and like status.
+     *
+     * @param int $id The ID of the novel to display.
+     * @return void
+     */
     public function show($id)
     {
         $novel = Novel::find($id);
@@ -41,6 +55,14 @@ class NovelController
         ]);
     }
 
+    /**
+     * Displays a specific chapter.
+     *
+     * Shows the chapter content, navigation to previous/next chapters, comments, and like status.
+     *
+     * @param int $id The ID of the chapter to display.
+     * @return void
+     */
     public function showChapter($id)
     {
         $chapter = Chapter::find($id);
@@ -73,6 +95,14 @@ class NovelController
         ]);
     }
 
+    /**
+     * Handles AJAX requests to like or unlike a novel or chapter.
+     *
+     * Toggles the like status for the current user and the specified target.
+     * Returns a JSON response with the success status, new like state, and updated count.
+     *
+     * @return void
+     */
     public function like()
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -114,6 +144,14 @@ class NovelController
         exit;
     }
 
+    /**
+     * Handles the submission of a new comment.
+     *
+     * Validates the comment text and target (novel or chapter), creates the comment,
+     * and renders the partial view for the new comment to be appended to the list.
+     *
+     * @return void
+     */
     public function comment()
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

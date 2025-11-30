@@ -5,10 +5,27 @@ namespace App\Core;
 use PDO;
 use PDOException;
 
+/**
+ * Database
+ *
+ * Singleton class for managing the database connection using PDO.
+ */
 class Database
 {
+    /**
+     * @var PDO|null The single PDO instance.
+     */
     private static $pdo;
 
+    /**
+     * Connects to the database.
+     *
+     * Establishes a PDO connection if one does not already exist.
+     * Uses configuration values for host, database name, user, and password.
+     *
+     * @return PDO The active PDO connection.
+     * @throws PDOException If the connection fails.
+     */
     public static function connect()
     {
         if (self::$pdo === null) {

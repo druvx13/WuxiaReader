@@ -2,10 +2,26 @@
 
 namespace App\Core;
 
+/**
+ * Router
+ *
+ * Handles URL routing and dispatching requests to the appropriate controllers.
+ */
 class Router
 {
+    /**
+     * @var array List of registered routes.
+     */
     private $routes = [];
 
+    /**
+     * Adds a route to the router.
+     *
+     * @param string          $method  The HTTP method (GET, POST, etc.) or 'ANY'.
+     * @param string          $path    The URL path pattern (exact match or regex).
+     * @param callable|array  $handler The function or [Controller, Method] to call.
+     * @return void
+     */
     public function add($method, $path, $handler)
     {
         $this->routes[] = [
@@ -15,6 +31,16 @@ class Router
         ];
     }
 
+    /**
+     * Dispatches the request to the matching route handler.
+     *
+     * Matches the current URI and HTTP method against registered routes.
+     * If a match is found, executes the handler. If not, sends a 404 response.
+     *
+     * @param string $method The HTTP method of the current request.
+     * @param string $uri    The URI of the current request.
+     * @return mixed The result of the handler execution.
+     */
     public function dispatch($method, $uri)
     {
         $uri = parse_url($uri, PHP_URL_PATH);
@@ -47,6 +73,15 @@ class Router
         require_once __DIR__ . '/../Views/404.php';
     }
 
+    /**
+     * Calls the specified handler with parameters.
+     *
+     * Instantiates the controller if the handler is an array [Controller, Method].
+     *
+     * @param callable|array $handler The handler to execute.
+     * @param array          $params  Parameters to pass to the handler (e.g., regex matches).
+     * @return mixed The result of the handler.
+     */
     private function callHandler($handler, $params)
     {
         if (is_array($handler)) {
