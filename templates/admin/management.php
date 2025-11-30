@@ -37,9 +37,9 @@ $base = Config::get('BASE_URL');
             </article>
 
             <article class="card card--admin">
-                <h2>Import: Novelfull / Clones</h2>
-                <p>Import a novel and chapters from novelfull.com and compatible clones.</p>
-                <a href="<?= $base ?>/admin/import-novelfull" class="btn btn--admin">Go to Novelfull Import</a>
+                <h2>Import: AllNovel.org</h2>
+                <p>Import a novel and chapters from allnovel.org.</p>
+                <a href="<?= $base ?>/admin/import-allnovel" class="btn btn--admin">Go to AllNovel Import</a>
             </article>
         </div>
     </section>
