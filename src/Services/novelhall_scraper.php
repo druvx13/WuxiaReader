@@ -5,6 +5,8 @@
 
 declare(strict_types=1);
 
+use App\Services\HttpClient;
+
 const NOVELHALL_ALLOWED_HOSTS = array(
     'novelhall.com',
     'www.novelhall.com'
@@ -13,54 +15,6 @@ const NOVELHALL_ALLOWED_HOSTS = array(
 const NOVELHALL_MINIMUM_THROTTLE = 3.0; // seconds
 
 /* ---------------- utilities ---------------- */
-
-/**
- * Performs an HTTP GET request using cURL.
- *
- * @param string $url     The URL to fetch.
- * @param array  $headers Optional HTTP headers to send.
- * @param int    $timeout Request timeout in seconds.
- * @return string The response body.
- * @throws RuntimeException If the request fails or returns an error status.
- */
-function nh_http_get(string $url, array $headers = array(), int $timeout = 60): string {
-    $ch = curl_init();
-    curl_setopt_array($ch, array(
-        CURLOPT_URL => $url,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_FOLLOWLOCATION => true,
-        CURLOPT_MAXREDIRS => 8,
-        CURLOPT_TIMEOUT => $timeout,
-        CURLOPT_CONNECTTIMEOUT => 20,
-        CURLOPT_USERAGENT => 'Mozilla/5.0 (compatible; NovelhallImporter/1.0)',
-        CURLOPT_HTTPHEADER => $headers,
-        CURLOPT_SSL_VERIFYPEER => true,
-        CURLOPT_ENCODING => ''
-    ));
-    $resp = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
-    $err = curl_error($ch);
-    curl_close($ch);
-    if ($resp === false) {
-        throw new RuntimeException("Network error: " . $err);
-    }
-    if ($httpCode >= 400) {
-        throw new RuntimeException("HTTP " . $httpCode . ": " . $url);
-    }
-    return $resp;
-}
-
-/**
- * Pauses execution for a specified number of seconds to throttle requests.
- *
- * @param float $seconds The number of seconds to sleep.
- * @return void
- */
-function nh_throttle(float $seconds): void {
-    if ($seconds > 0) {
-        usleep((int)($seconds * 1000000));
-    }
-}
 
 /**
  * Loads HTML content into a DOMDocument and creates a DOMXPath.
@@ -275,13 +229,13 @@ function nh_extract_chapter_list(DOMDocument $doc, string $baseUrl): array {
  * @param float  $throttle Minimum delay between requests.
  * @return array Associative array with 'title' and 'content'.
  */
-function novelhall_fetch_chapter_content(string $url, float $throttle = NOVELHALL_MINIMUM_THROTTLE): array {
+function novelhall_fetch_chapter_content(HttpClient $http, string $url, float $throttle = NOVELHALL_MINIMUM_THROTTLE): array {
     if ($throttle < NOVELHALL_MINIMUM_THROTTLE) {
         $throttle = NOVELHALL_MINIMUM_THROTTLE;
     }
-    nh_throttle($throttle);
+    $http->throttle($throttle);
 
-    $html = nh_http_get($url);
+    $html = $http->get($url);
     list($doc, $xpath) = nh_load_dom($html);
 
     // content: article div.entry-content
@@ -320,7 +274,7 @@ function novelhall_fetch_chapter_content(string $url, float $throttle = NOVELHAL
  * @param callable|null $log      Optional callback for logging.
  * @return array Associative array containing novel metadata and list of chapters.
  */
-function novelhall_parse_novel_page(string $url, float $throttle = NOVELHALL_MINIMUM_THROTTLE, ?callable $log = null): array {
+function novelhall_parse_novel_page(HttpClient $http, string $url, float $throttle = NOVELHALL_MINIMUM_THROTTLE, ?callable $log = null): array {
     if ($throttle < NOVELHALL_MINIMUM_THROTTLE) {
         $throttle = NOVELHALL_MINIMUM_THROTTLE;
     }
@@ -329,7 +283,7 @@ function novelhall_parse_novel_page(string $url, float $throttle = NOVELHALL_MIN
         $log("Fetching novel page: $url");
     }
 
-    $html = nh_http_get($url);
+    $html = $http->get($url);
     list($doc, $xpath) = nh_load_dom($html);
 
     $novel = array(
@@ -436,11 +390,13 @@ function novelhall_import_to_db(
         $throttle = NOVELHALL_MINIMUM_THROTTLE;
     }
 
+    $http = new HttpClient();
+
     if ($logger) {
         $logger("Fetching Novelhall novel page…");
     }
 
-    $novel = novelhall_parse_novel_page($url, $throttle);
+    $novel = novelhall_parse_novel_page($http, $url, $throttle);
     if (empty($novel['chapters'])) {
         throw new RuntimeException("No chapters found on this Novelhall novel page.");
     }
@@ -500,7 +456,7 @@ function novelhall_import_to_db(
 
             $contentHtml = isset($ch['content']) ? $ch['content'] : '';
             if (trim($contentHtml) === '') {
-                $res = novelhall_fetch_chapter_content($ch['url'], $throttle);
+                $res = novelhall_fetch_chapter_content($http, $ch['url'], $throttle);
                 if (!empty($res['title'])) {
                     $ch['name'] = $res['title'];
                 }
