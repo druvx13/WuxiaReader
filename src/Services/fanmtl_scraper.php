@@ -5,8 +5,6 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/db.php';
-
 const FMTL_ALLOWED_HOSTS = array(
     'fannovel.com', 'www.fannovel.com',
     'fannovels.com', 'www.fannovels.com',
@@ -36,6 +34,15 @@ const FMTL_MINIMUM_THROTTLE = 3.0; // seconds
 
 /* ---------------- utilities ---------------- */
 
+/**
+ * Performs an HTTP GET request using cURL.
+ *
+ * @param string $url     The URL to fetch.
+ * @param array  $headers Optional HTTP headers to send.
+ * @param int    $timeout Request timeout in seconds.
+ * @return string The response body.
+ * @throws RuntimeException If the request fails or returns an error status.
+ */
 function fmtl_http_get(string $url, array $headers = array(), int $timeout = 60): string {
     $ch = curl_init();
     curl_setopt_array($ch, array(
@@ -63,12 +70,26 @@ function fmtl_http_get(string $url, array $headers = array(), int $timeout = 60)
     return $resp;
 }
 
+/**
+ * Pauses execution for a specified number of seconds to throttle requests.
+ *
+ * @param float $seconds The number of seconds to sleep.
+ * @return void
+ */
 function fmtl_throttle(float $seconds): void {
     if ($seconds > 0) {
         usleep((int)($seconds * 1000000));
     }
 }
 
+/**
+ * Loads HTML content into a DOMDocument and creates a DOMXPath.
+ *
+ * Suppresses standard libxml errors during loading.
+ *
+ * @param string $html The HTML content string.
+ * @return array{DOMDocument, DOMXPath} The loaded document and XPath object.
+ */
 function fmtl_load_dom(string $html): array {
     libxml_use_internal_errors(true);
     $doc = new DOMDocument();
@@ -78,6 +99,14 @@ function fmtl_load_dom(string $html): array {
     return array($doc, $xpath);
 }
 
+/**
+ * Removes DOM nodes matching an XPath expression.
+ *
+ * @param DOMXPath     $xpath   The XPath object to use for querying.
+ * @param string       $expr    The XPath expression to match nodes.
+ * @param DOMNode|null $context The context node for the query (optional).
+ * @return void
+ */
 function fmtl_remove_nodes_by_xpath(DOMXPath $xpath, string $expr, ?DOMNode $context = null): void {
     $nodes = $xpath->query($expr, $context);
     if (!$nodes) {
@@ -90,6 +119,12 @@ function fmtl_remove_nodes_by_xpath(DOMXPath $xpath, string $expr, ?DOMNode $con
     }
 }
 
+/**
+ * Retrieves the inner HTML of a DOMNode.
+ *
+ * @param DOMNode $node The node to get inner HTML from.
+ * @return string The inner HTML string.
+ */
 function fmtl_inner_html(DOMNode $node): string {
     $html = '';
     foreach ($node->childNodes as $child) {
@@ -98,6 +133,15 @@ function fmtl_inner_html(DOMNode $node): string {
     return $html;
 }
 
+/**
+ * Resolves a relative URL against a base URL.
+ *
+ * Handles absolute URLs, protocol-relative URLs, and relative paths.
+ *
+ * @param string $base The base URL.
+ * @param string $rel  The relative URL to resolve.
+ * @return string The absolute URL.
+ */
 function fmtl_url_join(string $base, string $rel): string {
     if (preg_match('#^https?://#i', $rel)) {
         return $rel;
@@ -134,6 +178,12 @@ function fmtl_url_join(string $base, string $rel): string {
     return $abs;
 }
 
+/**
+ * Strips common chapter prefixes (e.g., "Chapter 1: ") from a title.
+ *
+ * @param string $title The original chapter title.
+ * @return string The cleaned title.
+ */
 function fmtl_strip_leading_chapter_prefix(string $title): string {
     $t = preg_replace('/^\s*(?:Chapter|Chap|Ch)[\s\.\-:]*\d+[\s\.\-:]*\s*/i', '', $title);
     $t = preg_replace('/^\s*\d{1,4}[\.\)\-:\s]+\s*/', '', $t);
@@ -141,7 +191,13 @@ function fmtl_strip_leading_chapter_prefix(string $title): string {
 }
 
 /**
- * Clean small HTML fragment, remove obvious junk (ads, scripts) but keep structural tags.
+ * Cleans an HTML fragment by removing scripts, styles, ads, and comments.
+ *
+ * Also resolves relative URLs in src and href attributes.
+ *
+ * @param string $html    The HTML fragment to clean.
+ * @param string $baseUrl The base URL for resolving relative links.
+ * @return string The cleaned HTML.
  */
 function fmtl_clean_fragment_html(string $html, string $baseUrl = ''): string {
     list($doc, $xpath) = fmtl_load_dom($html);
@@ -175,6 +231,9 @@ function fmtl_clean_fragment_html(string $html, string $baseUrl = ''): string {
 
 /* ---- URL helper for pagination (?page=N) ---- */
 
+/**
+ * Helper class for manipulating URLs, specifically for pagination.
+ */
 class FmtlURLWrapper {
     private array $parts;
     private string $scheme;
@@ -184,6 +243,11 @@ class FmtlURLWrapper {
     private array $queryParams = array();
     private string $fragment;
 
+    /**
+     * Constructor.
+     *
+     * @param string $url The initial URL to parse.
+     */
     public function __construct(string $url) {
         $this->parts  = parse_url($url);
         $this->scheme = isset($this->parts['scheme']) ? $this->parts['scheme'] : 'https';
@@ -196,10 +260,22 @@ class FmtlURLWrapper {
         $this->fragment = isset($this->parts['fragment']) ? $this->parts['fragment'] : '';
     }
 
+    /**
+     * Sets a query parameter.
+     *
+     * @param string $k The parameter key.
+     * @param string $v The parameter value.
+     * @return void
+     */
     public function setQueryParam(string $k, string $v): void {
         $this->queryParams[$k] = $v;
     }
 
+    /**
+     * Reconstructs the URL string from its components.
+     *
+     * @return string The full URL.
+     */
     public function href(): string {
         $port = $this->port ? ':' . $this->port : '';
         $q    = !empty($this->queryParams) ? '?' . http_build_query($this->queryParams) : '';
@@ -207,13 +283,23 @@ class FmtlURLWrapper {
         return $this->scheme . '://' . $this->host . $port . $this->path . $q . $f;
     }
 
+    /**
+     * Clone handler.
+     */
     public function __clone() {}
 }
 
 /* ---------------- Readwn-style TOC helpers ---------------- */
 
 /**
- * Get TOC page URLs: "ul.pagination li a" whose search includes 'page'.
+ * Extracts Table of Contents (TOC) pagination URLs.
+ *
+ * Looks for pagination links that contain a 'page' query parameter.
+ * Reconstructs the full list of page URLs based on the maximum page number found.
+ *
+ * @param DOMDocument $doc     The DOMDocument of the current page.
+ * @param string      $baseUrl The base URL of the current page.
+ * @return array List of TOC page URLs.
  */
 function fmtl_get_toc_page_urls(DOMDocument $doc, string $baseUrl): array {
     $xpath = new DOMXPath($doc);
@@ -268,7 +354,13 @@ function fmtl_get_toc_page_urls(DOMDocument $doc, string $baseUrl): array {
 }
 
 /**
- * Extract chapter anchors from "ul.chapter-list a".
+ * Extracts chapter information from a partial list on a page.
+ *
+ * Targets "ul.chapter-list a" elements.
+ *
+ * @param DOMDocument $doc     The DOMDocument to parse.
+ * @param string      $baseUrl The base URL for resolving relative links.
+ * @return array List of chapters, each as ['name' => string, 'url' => string].
  */
 function fmtl_extract_partial_chapter_list(DOMDocument $doc, string $baseUrl): array {
     $xpath = new DOMXPath($doc);
@@ -320,7 +412,11 @@ function fmtl_extract_partial_chapter_list(DOMDocument $doc, string $baseUrl): a
 /* ---------------- chapter page ---------------- */
 
 /**
- * Find chapter content and title for a single chapter URL.
+ * Fetches and parses the content of a single chapter.
+ *
+ * @param string $url      The URL of the chapter.
+ * @param float  $throttle The minimum time (in seconds) to wait before the request.
+ * @return array Associative array with 'title' and 'content'.
  */
 function fmtl_fetch_chapter_content(string $url, float $throttle = FMTL_MINIMUM_THROTTLE): array {
     if ($throttle < FMTL_MINIMUM_THROTTLE) {
@@ -356,6 +452,16 @@ function fmtl_fetch_chapter_content(string $url, float $throttle = FMTL_MINIMUM_
 
 /* ---------------- novel page ---------------- */
 
+/**
+ * Parses the main novel page to extract metadata and the full list of chapters.
+ *
+ * Handles pagination of the chapter list if present.
+ *
+ * @param string        $url      The URL of the novel page.
+ * @param float         $throttle Minimum delay between requests.
+ * @param callable|null $log      Optional callback for logging progress messages.
+ * @return array Associative array containing novel metadata and list of chapters.
+ */
 function fmtl_parse_novel_page(string $url, float $throttle = FMTL_MINIMUM_THROTTLE, ?callable $log = null): array {
     if ($throttle < FMTL_MINIMUM_THROTTLE) {
         $throttle = FMTL_MINIMUM_THROTTLE;
