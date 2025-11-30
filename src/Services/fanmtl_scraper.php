@@ -5,8 +5,6 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/db.php';
-
 const FMTL_ALLOWED_HOSTS = array(
     'fannovel.com', 'www.fannovel.com',
     'fannovels.com', 'www.fannovels.com',
