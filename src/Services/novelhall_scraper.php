@@ -142,17 +142,18 @@ function nh_clean_fragment_html(string $html, string $baseUrl = ''): string {
         $nodes = $xpath->query('//*[@src or @href]');
         if ($nodes) {
             foreach ($nodes as $el) {
-                /** @var DOMElement $el */
-                if ($el->hasAttribute('src')) {
-                    $v = $el->getAttribute('src');
-                    if ($v && !preg_match('#^(https?|data|mailto|tel|javascript):#i', $v)) {
-                        $el->setAttribute('src', nh_url_join($baseUrl, $v));
+                if ($el instanceof DOMElement) {
+                    if ($el->hasAttribute('src')) {
+                        $v = $el->getAttribute('src');
+                        if ($v && !preg_match('#^(https?|data|mailto|tel|javascript):#i', $v)) {
+                            $el->setAttribute('src', nh_url_join($baseUrl, $v));
+                        }
                     }
-                }
-                if ($el->hasAttribute('href')) {
-                    $v = $el->getAttribute('href');
-                    if ($v && !preg_match('#^(https?|data|mailto|tel|javascript):#i', $v)) {
-                        $el->setAttribute('href', nh_url_join($baseUrl, $v));
+                    if ($el->hasAttribute('href')) {
+                        $v = $el->getAttribute('href');
+                        if ($v && !preg_match('#^(https?|data|mailto|tel|javascript):#i', $v)) {
+                            $el->setAttribute('href', nh_url_join($baseUrl, $v));
+                        }
                     }
                 }
             }
@@ -183,7 +184,6 @@ function nh_extract_chapter_list(DOMDocument $doc, string $baseUrl): array {
 
     if ($catalogs) {
         foreach ($catalogs as $c) {
-            /** @var DOMElement $c */
             $anchors = $xpath->query(".//a", $c);
             $count = $anchors ? $anchors->length : 0;
             if ($count > $bestCount) {
@@ -199,7 +199,7 @@ function nh_extract_chapter_list(DOMDocument $doc, string $baseUrl): array {
     }
 
     foreach ($bestAnchors as $a) {
-        /** @var DOMElement $a */
+        if (!($a instanceof DOMElement)) continue;
         $href = trim($a->getAttribute('href'));
         if ($href === '') {
             continue;
@@ -333,7 +333,6 @@ function novelhall_parse_novel_page(HttpClient $http, string $url, float $thrott
     if ($introNodes && $introNodes->length) {
         $summaryPieces = array();
         foreach ($introNodes as $node) {
-            /** @var DOMElement $node */
             $txt = trim(preg_replace('/\s+/', ' ', $node->textContent));
             if ($txt !== '') {
                 $summaryPieces[] = $txt;
@@ -368,7 +367,7 @@ function novelhall_parse_novel_page(HttpClient $http, string $url, float $thrott
  * @param int|null $endChapter     1-based index of last chapter, or null for all
  * @param float    $throttle       delay between requests (seconds)
  * @param bool     $preserveTitles if true, keep original chapter titles
- * @param callable|null $log       optional logger: function(string $msg): void
+ * @param callable|null $logger    optional logger: function(string $msg): void
  *
  * @return int newly created novel ID
  */

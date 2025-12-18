@@ -162,17 +162,18 @@ function fmtl_clean_fragment_html(string $html, string $baseUrl = ''): string {
         $nodes = $xpath->query('//*[@src or @href]');
         if ($nodes) {
             foreach ($nodes as $el) {
-                /** @var DOMElement $el */
-                if ($el->hasAttribute('src')) {
-                    $v = $el->getAttribute('src');
-                    if ($v && !preg_match('#^(https?|data|mailto|tel|javascript):#i', $v)) {
-                        $el->setAttribute('src', fmtl_url_join($baseUrl, $v));
+                if ($el instanceof DOMElement) {
+                    if ($el->hasAttribute('src')) {
+                        $v = $el->getAttribute('src');
+                        if ($v && !preg_match('#^(https?|data|mailto|tel|javascript):#i', $v)) {
+                            $el->setAttribute('src', fmtl_url_join($baseUrl, $v));
+                        }
                     }
-                }
-                if ($el->hasAttribute('href')) {
-                    $v = $el->getAttribute('href');
-                    if ($v && !preg_match('#^(https?|data|mailto|tel|javascript):#i', $v)) {
-                        $el->setAttribute('href', fmtl_url_join($baseUrl, $v));
+                    if ($el->hasAttribute('href')) {
+                        $v = $el->getAttribute('href');
+                        if ($v && !preg_match('#^(https?|data|mailto|tel|javascript):#i', $v)) {
+                            $el->setAttribute('href', fmtl_url_join($baseUrl, $v));
+                        }
                     }
                 }
             }
@@ -413,7 +414,7 @@ function fmtl_fetch_chapter_content(HttpClient $http, string $url, float $thrott
  *
  * @param string        $url      The URL of the novel page.
  * @param float         $throttle Minimum delay between requests.
- * @param callable|null $log      Optional callback for logging progress messages.
+ * @param callable|null $log      Optional callback (string $msg): void.
  * @return array Associative array containing novel metadata and list of chapters.
  */
 function fmtl_parse_novel_page(HttpClient $http, string $url, float $throttle = FMTL_MINIMUM_THROTTLE, ?callable $log = null): array {
@@ -448,11 +449,8 @@ function fmtl_parse_novel_page(HttpClient $http, string $url, float $throttle = 
 
     // Cover
     $coverNode = $xpath->query("//figure[contains(@class,'cover')]//img")->item(0);
-    if ($coverNode) {
+    if ($coverNode instanceof DOMElement) {
         $src = $coverNode->getAttribute('src');
-        if ($src === null) {
-            $src = '';
-        }
         if ($src !== '') {
             $novel['cover'] = fmtl_url_join($url, $src);
         }
@@ -558,7 +556,7 @@ function fmtl_parse_novel_page(HttpClient $http, string $url, float $throttle = 
  * @param int|null     $endChapter     1-based end or null
  * @param float        $throttle       seconds between HTTP requests
  * @param bool         $preserveTitles preserve site titles if true
- * @param callable|null $log           optional logger: function(string $msg): void
+ * @param callable|null $logger        optional logger: function(string $msg): void
  *
  * @return int newly created novel ID
  */
@@ -586,7 +584,7 @@ function fanmtl_import_to_db(
         $logger("Fetching FanMTL/Readwn novel page…");
     }
 
-    $novel = fmtl_parse_novel_page($http, $url, $throttle);
+    $novel = fmtl_parse_novel_page($http, $url, $throttle, $logger);
     if (empty($novel['chapters'])) {
         throw new RuntimeException("No chapters found on novel page.");
     }

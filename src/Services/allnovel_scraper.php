@@ -99,17 +99,18 @@ function anv_clean_fragment_html(string $html, string $baseUrl = ''): string {
         $nodes = $xpath->query('//*[@src or @href]');
         if ($nodes) {
             foreach ($nodes as $el) {
-                /** @var DOMElement $el */
-                if ($el->hasAttribute('src')) {
-                    $v = $el->getAttribute('src');
-                    if ($v && !preg_match('#^(https?|data|mailto|tel|javascript):#i', $v)) {
-                        $el->setAttribute('src', anv_url_join($baseUrl, $v));
+                if ($el instanceof DOMElement) {
+                    if ($el->hasAttribute('src')) {
+                        $v = $el->getAttribute('src');
+                        if ($v && !preg_match('#^(https?|data|mailto|tel|javascript):#i', $v)) {
+                            $el->setAttribute('src', anv_url_join($baseUrl, $v));
+                        }
                     }
-                }
-                if ($el->hasAttribute('href')) {
-                    $v = $el->getAttribute('href');
-                    if ($v && !preg_match('#^(https?|data|mailto|tel|javascript):#i', $v)) {
-                        $el->setAttribute('href', anv_url_join($baseUrl, $v));
+                    if ($el->hasAttribute('href')) {
+                        $v = $el->getAttribute('href');
+                        if ($v && !preg_match('#^(https?|data|mailto|tel|javascript):#i', $v)) {
+                            $el->setAttribute('href', anv_url_join($baseUrl, $v));
+                        }
                     }
                 }
             }
@@ -160,7 +161,7 @@ function anv_get_toc_page_urls(DOMDocument $doc, string $baseUrl): array {
     $href = anv_url_join($baseUrl, $href);
 
     $limitAttr = $linkNode->getAttribute('data-page');
-    if ($limitAttr === null || $limitAttr === '') {
+    if ($limitAttr === '') {
         $parts = parse_url($href);
         $limitAttr = null;
         if (!empty($parts['query'])) {
@@ -196,7 +197,7 @@ function anv_extract_partial_chapter_list(DOMDocument $doc, string $baseUrl): ar
     }
 
     foreach ($links as $a) {
-        /** @var DOMElement $a */
+        if (!($a instanceof DOMElement)) continue;
         $href = trim($a->getAttribute('href'));
         if ($href === '') {
             continue;
@@ -293,7 +294,6 @@ function allnovel_parse_novel_page(HttpClient $http, string $url, float $throttl
     $infoLis = $xpath->query("//ul[contains(@class,'info-meta')]//li");
     if ($infoLis) {
         foreach ($infoLis as $li) {
-            /** @var DOMElement $li */
             $h3 = $xpath->query(".//h3", $li)->item(0);
             if ($h3 && trim($h3->textContent) === 'Author:') {
                 $a = $xpath->query(".//a", $li)->item(0);
@@ -325,7 +325,6 @@ function allnovel_parse_novel_page(HttpClient $http, string $url, float $throttl
     if ($summaryNodes && $summaryNodes->length) {
         $parts = array();
         foreach ($summaryNodes as $node) {
-            /** @var DOMElement $node */
             $txt = trim(preg_replace('/\s+/', ' ', $node->textContent));
             if ($txt !== '') {
                 $parts[] = $txt;

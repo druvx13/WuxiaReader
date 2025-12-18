@@ -22,7 +22,7 @@ class AdminController
      *
      * Redirects or exits with 403 Forbidden if not authorized.
      *
-     * @return array|null The current user data if authorized.
+     * @return array The current user data if authorized.
      */
     private function requireAdmin()
     {

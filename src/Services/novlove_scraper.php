@@ -199,7 +199,7 @@ function novlove_parse_novel_page(HttpClient $http, string $url, float $throttle
 
     // Cover
     $coverNode = $xpath->query("//div[@class='summary_image']//img")->item(0);
-    if ($coverNode) {
+    if ($coverNode && $coverNode instanceof DOMElement) {
         $src = $coverNode->getAttribute('data-src') ?: $coverNode->getAttribute('src');
         if ($src) {
             $novel['cover'] = novlove_url_join($url, $src);
@@ -230,7 +230,7 @@ function novlove_parse_novel_page(HttpClient $http, string $url, float $throttle
     $chapters = array();
     foreach ($chapterNodes as $li) {
         $a = $xpath->query(".//a", $li)->item(0);
-        if (!$a) continue;
+        if (!$a || !($a instanceof DOMElement)) continue;
         $href = $a->getAttribute('href');
         if (!$href) continue;
         $fullUrl = novlove_url_join($url, $href);
@@ -306,7 +306,7 @@ function novlove_fetch_chapter_content(HttpClient $http, string $url, float $thr
  * @param int|null     $endChapter     1-based end or null
  * @param float        $throttle       seconds between HTTP requests
  * @param bool         $preserveTitles preserve site titles if true
- * @param callable|null $log           optional logger: function(string $msg): void
+ * @param callable|null $logger        optional logger: function(string $msg): void
  *
  * @return int newly created novel ID
  */
