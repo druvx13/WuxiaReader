@@ -1,4 +1,16 @@
 <?php
+/**
+ * SessionHelper Class
+ *
+ * Provides utilities for managing session-based user data with caching
+ * to reduce database queries.
+ *
+ * @package    WuxiaReader
+ * @subpackage Core
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
+ */
 
 namespace App\Core;
 

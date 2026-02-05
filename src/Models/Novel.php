@@ -1,4 +1,15 @@
 <?php
+/**
+ * Novel Model
+ *
+ * Represents a novel in the library.
+ *
+ * @package    WuxiaReader
+ * @subpackage Models
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
+ */
 
 namespace App\Models;
 

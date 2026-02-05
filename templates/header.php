@@ -1,4 +1,17 @@
 <?php
+/**
+ * Header Template
+ *
+ * This template contains the HTML head section and navigation header.
+ * Included by all pages.
+ *
+ * @package    WuxiaReader
+ * @subpackage Templates
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
+ */
+
 use App\Core\Config;
 $base = Config::get('BASE_URL');
 ?>

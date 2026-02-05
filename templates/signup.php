@@ -1,4 +1,16 @@
 <?php
+/**
+ * Sign Up Page Template
+ *
+ * This template displays the user registration form.
+ *
+ * @package    WuxiaReader
+ * @subpackage Templates
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
+ */
+
 $title = 'Sign up';
 include 'header.php';
 ?>

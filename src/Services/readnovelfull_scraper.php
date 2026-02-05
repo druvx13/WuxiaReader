@@ -1,7 +1,16 @@
 <?php
-// readnovelfull_scraper.php
-// Scraper for readnovelfull.com
-// Imports novels + chapters directly into the existing MySQL schema.
+/**
+ * ReadNovelFull Scraper
+ *
+ * This scraper imports novels and chapters from readnovelfull.com.
+ * Imports data directly into the existing MySQL schema.
+ *
+ * @package    WuxiaReader
+ * @subpackage Services
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
+ */
 
 declare(strict_types=1);
 

@@ -1,8 +1,16 @@
 <?php
-// allnovel_scraper.php
-// AllNovel.org scraper.
-// Imports novels + chapters directly into the existing MySQL schema used by your app.
-// Reuses novel row if same title+tag already exists, supports live logger callback.
+/**
+ * AllNovel.org Scraper
+ *
+ * This scraper imports novels and chapters from AllNovel.org into the database.
+ * Reuses novel row if same title+tag already exists, supports live logger callback.
+ *
+ * @package    WuxiaReader
+ * @subpackage Services
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
+ */
 
 declare(strict_types=1);
 

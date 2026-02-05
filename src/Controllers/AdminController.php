@@ -1,4 +1,16 @@
 <?php
+/**
+ * AdminController Class
+ *
+ * Handles administrative tasks such as adding novels, adding chapters,
+ * and importing novels from external sources.
+ *
+ * @package    WuxiaReader
+ * @subpackage Controllers
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
+ */
 
 namespace App\Controllers;
 

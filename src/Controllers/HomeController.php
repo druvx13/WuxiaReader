@@ -1,4 +1,15 @@
 <?php
+/**
+ * HomeController Class
+ *
+ * Manages the landing page of the application.
+ *
+ * @package    WuxiaReader
+ * @subpackage Controllers
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
+ */
 
 namespace App\Controllers;
 

@@ -1,4 +1,15 @@
 <?php
+/**
+ * AuthController Class
+ *
+ * Handles user authentication including login, signup, and logout.
+ *
+ * @package    WuxiaReader
+ * @subpackage Controllers
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
+ */
 
 namespace App\Controllers;
 

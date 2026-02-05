@@ -1,7 +1,16 @@
 <?php
-// fanmtl_scraper.php
-// Readwn-style parser adapted for PHP, targeting fanmtl.com and related clones.
-// Imports novels + chapters directly into the existing MySQL schema used by your app.
+/**
+ * FanMTL Scraper
+ *
+ * This scraper targets fanmtl.com and related clones (fannovel, fansmtl, novelmt, readwn, etc.).
+ * Imports novels and chapters directly into the existing MySQL schema.
+ *
+ * @package    WuxiaReader
+ * @subpackage Services
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
+ */
 
 declare(strict_types=1);
 

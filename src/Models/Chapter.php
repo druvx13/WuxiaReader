@@ -1,4 +1,16 @@
 <?php
+/**
+ * Chapter Model
+ *
+ * Represents a chapter of a novel. Provides methods for retrieving, creating,
+ * and navigating chapters.
+ *
+ * @package    WuxiaReader
+ * @subpackage Models
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
+ */
 
 namespace App\Models;
 

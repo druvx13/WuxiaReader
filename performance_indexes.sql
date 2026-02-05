@@ -1,3 +1,15 @@
+/**
+ * Performance Indexes Migration
+ *
+ * This migration adds database indexes to improve query performance.
+ * Run this script on existing installations to apply performance optimizations.
+ *
+ * @package    WuxiaReader
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
+ */
+
 -- Performance Optimization: Add Missing Database Indexes
 -- This migration adds indexes to improve query performance
 

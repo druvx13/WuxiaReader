@@ -1,3 +1,15 @@
+/**
+ * Main Stylesheet
+ *
+ * This file contains all CSS styles for the WuxiaReader application.
+ * Includes responsive design, dark mode support, and custom theming.
+ *
+ * @package    WuxiaReader
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
+ */
+
 /* Base */
 
 :root {

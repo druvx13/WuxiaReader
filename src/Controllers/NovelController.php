@@ -1,4 +1,16 @@
 <?php
+/**
+ * NovelController Class
+ *
+ * Handles display and interaction with novels and chapters, including
+ * viewing details, reading chapters, liking, and commenting.
+ *
+ * @package    WuxiaReader
+ * @subpackage Controllers
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
+ */
 
 namespace App\Controllers;
 

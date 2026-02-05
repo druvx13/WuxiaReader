@@ -1,8 +1,17 @@
 <?php
-// novelfull_scraper.php
-// Novelfull-style parser adapted for PHP, targeting novelfull/allnovel/novelnext/etc clones.
-// Imports novels + chapters directly into the existing MySQL schema used by your app.
-// Reuses novel row if same title+tag already exists, supports live logger callback.
+/**
+ * NovelFull Scraper
+ *
+ * This scraper targets Novelfull-style sites including novelfull, allnovel, novelnext, and other clones.
+ * Imports novels and chapters directly into the MySQL schema.
+ * Reuses novel row if same title+tag already exists, supports live logger callback.
+ *
+ * @package    WuxiaReader
+ * @subpackage Services
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
+ */
 
 declare(strict_types=1);
 

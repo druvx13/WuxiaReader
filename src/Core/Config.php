@@ -1,4 +1,15 @@
 <?php
+/**
+ * Config Class
+ *
+ * Manages configuration settings loaded from a .env file.
+ *
+ * @package    WuxiaReader
+ * @subpackage Core
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
+ */
 
 namespace App\Core;
 

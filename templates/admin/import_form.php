@@ -1,4 +1,16 @@
 <?php
+/**
+ * Admin: Import Form Template
+ *
+ * This template displays the form for importing novels from external sources.
+ *
+ * @package    WuxiaReader
+ * @subpackage Templates/Admin
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
+ */
+
 $title = 'Admin: Import ' . ucfirst($source);
 include __DIR__ . '/../header.php';
 use App\Core\Config;

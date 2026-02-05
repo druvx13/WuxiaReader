@@ -1,4 +1,17 @@
 <?php
+/**
+ * Novel Detail Template
+ *
+ * This template displays a single novel's details including chapters list,
+ * comments, and like functionality.
+ *
+ * @package    WuxiaReader
+ * @subpackage Templates
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
+ */
+
 $title = $novel['title'];
 include 'header.php';
 use App\Core\Config;

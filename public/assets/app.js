@@ -1,3 +1,15 @@
+/**
+ * Main Application JavaScript
+ *
+ * This file contains the client-side JavaScript for the WuxiaReader application.
+ * It handles likes, comments, and distraction-free reading mode toggle.
+ *
+ * @package    WuxiaReader
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
+ */
+
 // assets/app.js
 
 document.addEventListener('DOMContentLoaded', function () {

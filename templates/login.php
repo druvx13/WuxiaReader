@@ -1,4 +1,16 @@
 <?php
+/**
+ * Login Page Template
+ *
+ * This template displays the user login form.
+ *
+ * @package    WuxiaReader
+ * @subpackage Templates
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
+ */
+
 $title = 'Login';
 include 'header.php';
 ?>

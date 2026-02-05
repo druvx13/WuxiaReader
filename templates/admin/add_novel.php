@@ -1,4 +1,16 @@
 <?php
+/**
+ * Admin: Add Novel Template
+ *
+ * This template displays the admin form for adding a new novel to the library.
+ *
+ * @package    WuxiaReader
+ * @subpackage Templates/Admin
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
+ */
+
 $title = 'Admin: Add Novel';
 include __DIR__ . '/../header.php';
 use App\Core\Config;

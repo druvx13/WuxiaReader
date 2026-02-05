@@ -1,11 +1,16 @@
 <?php
-
 /**
  * Autoloader
  *
  * Registers a simple PSR-4 compliant autoloader for the "App" namespace.
  * It maps the namespace "App\" to the "src/" directory.
+ *
+ * @package    WuxiaReader
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
  */
+
 spl_autoload_register(function ($class) {
     // Project-specific namespace prefix
     $prefix = 'App\\';

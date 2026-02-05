@@ -1,11 +1,15 @@
 <?php
-
 /**
  * Entry Point
  *
  * This file serves as the front controller for the application.
  * It handles all incoming requests, initializes the environment, sets up routing,
  * and dispatches requests to the appropriate controllers.
+ *
+ * @package    WuxiaReader
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
  */
 
 require_once __DIR__ . '/autoload.php';

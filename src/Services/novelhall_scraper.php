@@ -1,7 +1,16 @@
 <?php
-// novelhall_scraper.php
-// Novelhall-style parser adapted for PHP, targeting novelhall.com.
-// Imports novels + chapters directly into your MySQL schema: novels / chapters.
+/**
+ * NovelHall Scraper
+ *
+ * This scraper targets novelhall.com to import novels and chapters.
+ * Imports data directly into the MySQL schema (novels and chapters tables).
+ *
+ * @package    WuxiaReader
+ * @subpackage Services
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
+ */
 
 declare(strict_types=1);
 

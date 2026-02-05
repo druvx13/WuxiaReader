@@ -1,3 +1,14 @@
+/**
+ * Database Initialization Script
+ *
+ * This file contains the SQL schema definition for the WuxiaReader application.
+ * It creates all necessary tables including users, novels, chapters, comments, and likes.
+ *
+ * @package    WuxiaReader
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
+ */
 
 
 -- USERS
