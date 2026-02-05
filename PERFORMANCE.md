@@ -77,7 +77,7 @@ Added composite and single-column indexes to improve query performance:
 - User::find() already excludes password_hash from returned data
 - SessionHelper defensively checks for and removes password_hash if present
 - Session cache is cleared before session destruction on logout
-- Session ID is regenerated during logout for added security
+- Proper session operation order prevents errors during logout
 
 **Impact**: Reduces 1 database query per page request for logged-in users. The actual reduction varies by page:
 - Pages with many queries (e.g., novel detail page): ~16-20% reduction
