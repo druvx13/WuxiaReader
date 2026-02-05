@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Core\View;
+use App\Core\SessionHelper;
 use App\Models\User;
 
 /**
@@ -96,6 +97,7 @@ class AuthController
     public function logout()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            SessionHelper::clearUserCache();
             session_destroy();
             View::redirect('/');
         }

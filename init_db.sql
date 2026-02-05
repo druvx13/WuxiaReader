@@ -29,8 +29,9 @@ CREATE TABLE chapters (
   order_index INT NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (novel_id) REFERENCES novels(id) ON DELETE CASCADE,
-  INDEX (novel_id),
-  INDEX (order_index)
+  INDEX idx_novel_id (novel_id),
+  INDEX idx_order_index (order_index),
+  INDEX idx_novel_order (novel_id, order_index)
 ) ENGINE=InnoDB;
 
 -- COMMENTS
@@ -44,9 +45,11 @@ CREATE TABLE comments (
   FOREIGN KEY (novel_id) REFERENCES novels(id) ON DELETE CASCADE,
   FOREIGN KEY (chapter_id) REFERENCES chapters(id) ON DELETE CASCADE,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  INDEX (novel_id),
-  INDEX (chapter_id),
-  INDEX (user_id)
+  INDEX idx_novel_id (novel_id),
+  INDEX idx_chapter_id (chapter_id),
+  INDEX idx_user_id (user_id),
+  INDEX idx_novel_created (novel_id, created_at),
+  INDEX idx_chapter_created (chapter_id, created_at)
 ) ENGINE=InnoDB;
 
 -- LIKES
@@ -58,7 +61,8 @@ CREATE TABLE likes (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   UNIQUE KEY uniq_like (target_type, target_id, user_id),
-  INDEX (target_type, target_id)
+  INDEX idx_target (target_type, target_id),
+  INDEX idx_user_id (user_id)
 ) ENGINE=InnoDB;
 
 -- DEFAULT ADMIN (password: admin123)

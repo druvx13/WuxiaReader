@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Core\View;
 use App\Core\Config;
+use App\Core\SessionHelper;
 use App\Models\User;
 use App\Models\Novel;
 use App\Models\Chapter;
@@ -26,10 +27,7 @@ class AdminController
      */
     private function requireAdmin()
     {
-        $currentUser = null;
-        if (!empty($_SESSION['user_id'])) {
-            $currentUser = User::find($_SESSION['user_id']);
-        }
+        $currentUser = SessionHelper::getCurrentUser();
 
         if (!$currentUser || $currentUser['role'] !== 'admin') {
             http_response_code(403);
