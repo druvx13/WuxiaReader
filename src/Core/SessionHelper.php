@@ -17,6 +17,8 @@ class SessionHelper
      *
      * Caches the user data in the session to avoid repeated database lookups.
      * The cache is automatically invalidated if the user logs out or session changes.
+     * Note: User::find() already excludes password_hash, but we defensively remove
+     * it here as well for security in case the User model changes.
      *
      * @return array|null The current user data or null if not logged in.
      */
@@ -34,13 +36,19 @@ class SessionHelper
             return $_SESSION[$cacheKey];
         }
 
-        // Fetch from database and cache
+        // Fetch from database and cache (excluding sensitive fields)
         $user = User::find($userId);
         if ($user) {
-            $_SESSION[$cacheKey] = $user;
+            // Defensively remove sensitive fields before caching (User::find already excludes them)
+            $cachedUser = $user;
+            if (isset($cachedUser['password_hash'])) {
+                unset($cachedUser['password_hash']);
+            }
+            $_SESSION[$cacheKey] = $cachedUser;
+            return $cachedUser;
         }
 
-        return $user;
+        return null;
     }
 
     /**
@@ -48,12 +56,17 @@ class SessionHelper
      *
      * Should be called when user data is updated or user logs out.
      *
+     * @param int|null $userId Optional user ID to clear cache for. If not provided, clears current user's cache.
      * @return void
      */
-    public static function clearUserCache()
+    public static function clearUserCache($userId = null)
     {
-        if (!empty($_SESSION['user_id'])) {
-            $cacheKey = 'cached_user_' . $_SESSION['user_id'];
+        if ($userId === null && !empty($_SESSION['user_id'])) {
+            $userId = $_SESSION['user_id'];
+        }
+        
+        if ($userId) {
+            $cacheKey = 'cached_user_' . $userId;
             unset($_SESSION[$cacheKey]);
         }
     }

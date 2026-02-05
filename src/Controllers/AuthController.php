@@ -97,7 +97,11 @@ class AuthController
     public function logout()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // Clear cache before destroying session
             SessionHelper::clearUserCache();
+            // Regenerate session ID for security, then destroy
+            session_regenerate_id(true);
+            $_SESSION = [];
             session_destroy();
             View::redirect('/');
         }

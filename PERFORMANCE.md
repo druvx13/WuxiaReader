@@ -70,9 +70,18 @@ Added composite and single-column indexes to improve query performance:
 **Solution**: Created `SessionHelper::getCurrentUser()` that caches user data in the session:
 - First call fetches from database and caches in `$_SESSION`
 - Subsequent calls return cached data
-- Cache is cleared on logout
+- Cache is cleared on logout using proper session handling
+- Sensitive fields (password_hash) are defensively excluded from cache
+
+**Security Considerations**:
+- User::find() already excludes password_hash from returned data
+- SessionHelper defensively checks for and removes password_hash if present
+- Session cache is cleared before session destruction on logout
+- Session ID is regenerated during logout for added security
 
 **Impact**: Reduces 1 database query per page request for logged-in users (~25-50% reduction in queries per page).
+
+**Note**: For applications where user data frequently changes (e.g., profile updates, role changes), consider calling `SessionHelper::clearUserCache($userId)` after user data modifications to prevent stale cache.
 
 ---
 
