@@ -79,7 +79,9 @@ Added composite and single-column indexes to improve query performance:
 - Session cache is cleared before session destruction on logout
 - Session ID is regenerated during logout for added security
 
-**Impact**: Reduces 1 database query per page request for logged-in users (~25-50% reduction in queries per page).
+**Impact**: Reduces 1 database query per page request for logged-in users. The actual reduction varies by page:
+- Pages with many queries (e.g., novel detail page): ~16-20% reduction
+- Pages with fewer queries (e.g., home page with cached novels): ~25-33% reduction
 
 **Note**: For applications where user data frequently changes (e.g., profile updates, role changes), consider calling `SessionHelper::clearUserCache($userId)` after user data modifications to prevent stale cache.
 
