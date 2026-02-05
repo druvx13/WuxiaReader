@@ -1,4 +1,15 @@
 <?php
+/**
+ * Router Class
+ *
+ * Handles URL routing and dispatching requests to the appropriate controllers.
+ *
+ * @package    WuxiaReader
+ * @subpackage Core
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
+ */
 
 namespace App\Core;
 

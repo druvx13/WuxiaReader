@@ -1,4 +1,15 @@
 <?php
+/**
+ * Novel Model
+ *
+ * Represents a novel in the library.
+ *
+ * @package    WuxiaReader
+ * @subpackage Models
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
+ */
 
 namespace App\Models;
 
@@ -24,9 +35,10 @@ class Novel
     {
         $pdo = Database::connect();
         return $pdo->query("
-            SELECT n.*,
-                (SELECT COUNT(*) FROM chapters c WHERE c.novel_id = n.id) AS chapter_count
+            SELECT n.*, COUNT(c.id) AS chapter_count
             FROM novels n
+            LEFT JOIN chapters c ON n.id = c.novel_id
+            GROUP BY n.id
             ORDER BY n.created_at DESC
         ")->fetchAll();
     }

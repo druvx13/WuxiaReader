@@ -1,4 +1,17 @@
 <?php
+/**
+ * Admin: Management Dashboard Template
+ *
+ * This template displays the main admin management dashboard with links
+ * to add novels, chapters, and import from external sources.
+ *
+ * @package    WuxiaReader
+ * @subpackage Templates/Admin
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
+ */
+
 $title = 'Management';
 include __DIR__ . '/../header.php';
 use App\Core\Config;

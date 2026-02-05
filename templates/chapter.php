@@ -1,4 +1,17 @@
 <?php
+/**
+ * Chapter Display Template
+ *
+ * This template displays a single chapter of a novel with navigation,
+ * comments, and like functionality.
+ *
+ * @package    WuxiaReader
+ * @subpackage Templates
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
+ */
+
 $title = $chapter['title'];
 include 'header.php';
 use App\Core\Config;

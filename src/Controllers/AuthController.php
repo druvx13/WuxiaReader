@@ -1,8 +1,20 @@
 <?php
+/**
+ * AuthController Class
+ *
+ * Handles user authentication including login, signup, and logout.
+ *
+ * @package    WuxiaReader
+ * @subpackage Controllers
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
+ */
 
 namespace App\Controllers;
 
 use App\Core\View;
+use App\Core\SessionHelper;
 use App\Models\User;
 
 /**
@@ -96,6 +108,10 @@ class AuthController
     public function logout()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // Clear cache before modifying session
+            SessionHelper::clearUserCache();
+            // Clear session data and destroy
+            $_SESSION = [];
             session_destroy();
             View::redirect('/');
         }

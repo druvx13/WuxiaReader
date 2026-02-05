@@ -1,4 +1,15 @@
 <?php
+/**
+ * Comment Model
+ *
+ * Manages user comments on novels and chapters.
+ *
+ * @package    WuxiaReader
+ * @subpackage Models
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
+ */
 
 namespace App\Models;
 

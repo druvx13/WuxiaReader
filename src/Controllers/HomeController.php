@@ -1,8 +1,20 @@
 <?php
+/**
+ * HomeController Class
+ *
+ * Manages the landing page of the application.
+ *
+ * @package    WuxiaReader
+ * @subpackage Controllers
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
+ */
 
 namespace App\Controllers;
 
 use App\Core\View;
+use App\Core\SessionHelper;
 use App\Models\Novel;
 use App\Models\User;
 
@@ -24,10 +36,7 @@ class HomeController
     {
         $novels = Novel::findAll();
 
-        $currentUser = null;
-        if (!empty($_SESSION['user_id'])) {
-            $currentUser = User::find($_SESSION['user_id']);
-        }
+        $currentUser = SessionHelper::getCurrentUser();
 
         View::render('home', [
             'novels' => $novels,

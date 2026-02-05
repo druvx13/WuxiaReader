@@ -1,4 +1,15 @@
 <?php
+/**
+ * User Model
+ *
+ * Represents a user in the system.
+ *
+ * @package    WuxiaReader
+ * @subpackage Models
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
+ */
 
 namespace App\Models;
 

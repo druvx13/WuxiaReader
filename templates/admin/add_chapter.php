@@ -1,4 +1,16 @@
 <?php
+/**
+ * Admin: Add Chapter Template
+ *
+ * This template displays the admin form for adding a new chapter to a novel.
+ *
+ * @package    WuxiaReader
+ * @subpackage Templates/Admin
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
+ */
+
 $title = 'Admin: Add Chapter';
 include __DIR__ . '/../header.php';
 use App\Core\Config;

@@ -1,4 +1,15 @@
 <?php
+/**
+ * Like Model
+ *
+ * Manages user likes (upvotes) for novels and chapters.
+ *
+ * @package    WuxiaReader
+ * @subpackage Models
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
+ */
 
 namespace App\Models;
 

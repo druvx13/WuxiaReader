@@ -1,8 +1,21 @@
 <?php
+/**
+ * NovelController Class
+ *
+ * Handles display and interaction with novels and chapters, including
+ * viewing details, reading chapters, liking, and commenting.
+ *
+ * @package    WuxiaReader
+ * @subpackage Controllers
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
+ */
 
 namespace App\Controllers;
 
 use App\Core\View;
+use App\Core\SessionHelper;
 use App\Models\Novel;
 use App\Models\Chapter;
 use App\Models\Comment;
@@ -38,10 +51,7 @@ class NovelController
         $comments = Comment::findByNovel($id);
         $likesCount = Like::count('novel', $id);
 
-        $currentUser = null;
-        if (!empty($_SESSION['user_id'])) {
-            $currentUser = User::find($_SESSION['user_id']);
-        }
+        $currentUser = SessionHelper::getCurrentUser();
 
         $likedByUser = Like::isLikedByUser('novel', $id, $currentUser['id'] ?? null);
 
@@ -77,10 +87,7 @@ class NovelController
         $next = Chapter::findNext($chapter['novel_id'], $chapter['order_index']);
         $likesCount = Like::count('chapter', $id);
 
-        $currentUser = null;
-        if (!empty($_SESSION['user_id'])) {
-            $currentUser = User::find($_SESSION['user_id']);
-        }
+        $currentUser = SessionHelper::getCurrentUser();
 
         $likedByUser = Like::isLikedByUser('chapter', $id, $currentUser['id'] ?? null);
 
@@ -110,10 +117,7 @@ class NovelController
         }
         header('Content-Type: application/json');
 
-        $currentUser = null;
-        if (!empty($_SESSION['user_id'])) {
-            $currentUser = User::find($_SESSION['user_id']);
-        }
+        $currentUser = SessionHelper::getCurrentUser();
 
         if (!$currentUser) {
             http_response_code(401);
@@ -158,10 +162,7 @@ class NovelController
              return;
         }
 
-        $currentUser = null;
-        if (!empty($_SESSION['user_id'])) {
-            $currentUser = User::find($_SESSION['user_id']);
-        }
+        $currentUser = SessionHelper::getCurrentUser();
 
         if (!$currentUser) {
             http_response_code(401);

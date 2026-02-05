@@ -1,4 +1,16 @@
 <?php
+/**
+ * Home Page Template
+ *
+ * This template displays the main page with a grid of all available novels.
+ *
+ * @package    WuxiaReader
+ * @subpackage Templates
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
+ */
+
 $title = 'Novels';
 include 'header.php';
 use App\Core\Config;

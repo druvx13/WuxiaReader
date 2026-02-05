@@ -1,4 +1,15 @@
 <?php
+/**
+ * View Class
+ *
+ * Handles the rendering of HTML templates and HTTP redirects.
+ *
+ * @package    WuxiaReader
+ * @subpackage Core
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
+ */
 
 namespace App\Core;
 

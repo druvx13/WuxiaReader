@@ -1,4 +1,15 @@
 <?php
+/**
+ * Database Class
+ *
+ * Singleton class for managing the database connection using PDO.
+ *
+ * @package    WuxiaReader
+ * @subpackage Core
+ * @author     Anonymous
+ * @license    LUCA Free License
+ * @version    1.0
+ */
 
 namespace App\Core;
 
