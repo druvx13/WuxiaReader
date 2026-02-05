@@ -275,27 +275,19 @@ class AdminController
         $currentUser = $this->requireAdmin();
         set_time_limit(0);
 
-        // Require scraper functions
-        require_once __DIR__ . '/../Services/fanmtl_scraper.php';
-        require_once __DIR__ . '/../Services/novelhall_scraper.php';
-        require_once __DIR__ . '/../Services/allnovel_scraper.php';
-        require_once __DIR__ . '/../Services/readnovelfull_scraper.php';
-
+        // Use ScraperFactory for lazy loading
+        require_once __DIR__ . '/../Services/ScraperFactory.php';
+        
         $errors = [];
         $url = $_POST['url'] ?? '';
         $start = $_POST['start'] ?? '1';
         $end = $_POST['end'] ?? '';
 
-        $throttleDefault = 1.0;
-        if ($source === 'fanmtl') {
-            $throttleDefault = FMTL_MINIMUM_THROTTLE;
-        } elseif ($source === 'novelhall') {
-            $throttleDefault = NOVELHALL_MINIMUM_THROTTLE;
-        } elseif ($source === 'allnovel') {
-            $throttleDefault = ALLNOVEL_MINIMUM_THROTTLE;
-        } elseif ($source === 'readnovelfull') {
-            $throttleDefault = READNOVELFULL_MINIMUM_THROTTLE;
-        }
+        // Get default throttle from factory
+        $throttleDefault = \App\Services\ScraperFactory::isSupported($source) 
+            ? \App\Services\ScraperFactory::getMinimumThrottle($source)
+            : 1.0;
+
         $throttle = $_POST['throttle'] ?? (string)$throttleDefault;
         $preserve = isset($_POST['preserve_titles']);
 
@@ -308,6 +300,10 @@ class AdminController
             if ($url === '') {
                 $errors[] = "URL is required.";
             }
+            if (!\App\Services\ScraperFactory::isSupported($source)) {
+                $errors[] = "Unsupported source: " . $source;
+            }
+            
             $startInt = ctype_digit($start) && (int)$start >= 1 ? (int)$start : 1;
             $endInt = null;
             if ($end !== '') {
@@ -348,48 +344,18 @@ class AdminController
 
                 try {
                     $pdo = \App\Core\Database::connect();
-                    if ($source === 'fanmtl') {
-                         $newId = fanmtl_import_to_db(
-                            $pdo,
-                            $url,
-                            $startInt,
-                            $endInt,
-                            $thrFloat,
-                            !empty($preserve),
-                            $logger
-                        );
-                    } elseif ($source === 'novelhall') {
-                        $newId = novelhall_import_to_db(
-                            $pdo,
-                            $url,
-                            $startInt,
-                            $endInt,
-                            $thrFloat,
-                            !empty($preserve),
-                            $logger
-                        );
-                    } elseif ($source === 'readnovelfull') {
-                        $newId = readnovelfull_import_to_db(
-                            $pdo,
-                            $url,
-                            $startInt,
-                            $endInt,
-                            $thrFloat,
-                            !empty($preserve),
-                            $logger
-                        );
-                    } else {
-                        // allnovel
-                        $newId = allnovel_import_to_db(
-                            $pdo,
-                            $url,
-                            $startInt,
-                            $endInt,
-                            $thrFloat,
-                            !empty($preserve),
-                            $logger
-                        );
-                    }
+                    
+                    // Use ScraperFactory to get the appropriate scraper
+                    $scraper = \App\Services\ScraperFactory::create($source);
+                    $newId = $scraper->importToDb(
+                        $pdo,
+                        $url,
+                        $startInt,
+                        $endInt,
+                        $thrFloat,
+                        !empty($preserve),
+                        $logger
+                    );
 
                     echo '<div class="log-line log-line--done">Import finished. New novel ID: ' . (int)$newId . '.</div>';
                     echo "</div>\n";
