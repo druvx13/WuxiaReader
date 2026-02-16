@@ -1,8 +1,16 @@
 # Novel Library Application
 
-Copyright (C) 2026 Druvx13  
-This Work is licensed under the FFP (Freedom For People) License, Version 1.0.  
-THE WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
+```
+Copyright (C) 2026 Druvx13
+
+This Work is licensed under
+the FFP (Freedom For People) License,
+Version 1.0.
+
+THE WORK IS PROVIDED "AS IS",
+WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED.
+```
 
 ---
 
