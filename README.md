@@ -1,5 +1,11 @@
 # Novel Library Application
 
+Copyright (C) 2026 Druvx13  
+This Work is licensed under the FFP (Freedom For People) License, Version 1.0.  
+THE WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
+
+---
+
 A lightweight PHP MVC application for managing and reading novels. This application allows users to read novels, track chapters, leave comments, and like their favorite content. It includes an admin interface for managing content and importing novels from external sources.
 
 ## Features
@@ -91,4 +97,4 @@ The project follows a custom MVC (Model-View-Controller) architecture:
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the FFP (Freedom For People) License, Version 1.0 - see the [LICENSE](LICENSE) file for details.
