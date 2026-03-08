@@ -227,6 +227,16 @@ class AdminController
     }
 
     /**
+     * Initiates the import process for NovelFull and compatible sites.
+     *
+     * @return void
+     */
+    public function importNovelfull()
+    {
+        $this->importGeneric('novelfull');
+    }
+
+    /**
      * Initiates the import process for FanMTL.
      *
      * @return void
@@ -285,6 +295,7 @@ class AdminController
         require_once __DIR__ . '/../Services/novelhall_scraper.php';
         require_once __DIR__ . '/../Services/allnovel_scraper.php';
         require_once __DIR__ . '/../Services/readnovelfull_scraper.php';
+        require_once __DIR__ . '/../Services/novelfull_scraper.php';
 
         $errors = [];
         $url = $_POST['url'] ?? '';
@@ -300,6 +311,8 @@ class AdminController
             $throttleDefault = ALLNOVEL_MINIMUM_THROTTLE;
         } elseif ($source === 'readnovelfull') {
             $throttleDefault = READNOVELFULL_MINIMUM_THROTTLE;
+        } elseif ($source === 'novelfull') {
+            $throttleDefault = NOVELFULL_MINIMUM_THROTTLE;
         }
         $throttle = $_POST['throttle'] ?? (string)$throttleDefault;
         $preserve = isset($_POST['preserve_titles']);
@@ -375,6 +388,16 @@ class AdminController
                         );
                     } elseif ($source === 'readnovelfull') {
                         $newId = readnovelfull_import_to_db(
+                            $pdo,
+                            $url,
+                            $startInt,
+                            $endInt,
+                            $thrFloat,
+                            !empty($preserve),
+                            $logger
+                        );
+                    } elseif ($source === 'novelfull') {
+                        $newId = novelfull_import_to_db(
                             $pdo,
                             $url,
                             $startInt,

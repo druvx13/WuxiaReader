@@ -19,6 +19,7 @@ use App\Core\Config;
 $base = Config::get('BASE_URL');
 ?>
 </main>
+<button class="scroll-top" id="scroll-top" aria-label="Scroll to top" title="Back to top">↑</button>
 <script src="<?= $base ?>/assets/app.js"></script>
 </body>
 </html>

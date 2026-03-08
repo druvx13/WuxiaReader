@@ -24,21 +24,29 @@ $base = Config::get('BASE_URL');
     <meta charset="UTF-8">
     <title><?= htmlspecialchars($title ?? 'Wuxia Reader') ?> – Wuxia Reader</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="base-url" content="<?= htmlspecialchars($base) ?>">
     <link rel="stylesheet" href="<?= $base ?>/assets/style.css">
 </head>
 <body>
+<div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
 <header class="site-header">
     <div class="site-header__inner">
         <a href="<?= $base ?>/" class="logo">Wuxia Reader</a>
 
-        <nav class="nav">
+        <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+            <span class="nav-toggle__bar"></span>
+            <span class="nav-toggle__bar"></span>
+            <span class="nav-toggle__bar"></span>
+        </button>
+
+        <nav class="nav" id="main-nav">
             <a href="<?= $base ?>/">Novels</a>
             <?php if (!empty($current_user) && $current_user['role'] === 'admin'): ?>
                 <a href="<?= $base ?>/admin/management" class="nav__admin">Management</a>
             <?php endif; ?>
         </nav>
 
-        <div class="auth">
+        <div class="auth" id="main-auth">
             <?php if (!empty($current_user)): ?>
                 <span class="auth__user">👤 <?= htmlspecialchars($current_user['username']) ?> (<?= htmlspecialchars($current_user['role']) ?>)</span>
                 <form method="post" action="<?= $base ?>/logout" class="auth__form">
