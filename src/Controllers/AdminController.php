@@ -353,6 +353,7 @@ class AdminController
         }
         $throttle = $_POST['throttle'] ?? (string)$throttleDefault;
         $preserve = isset($_POST['preserve_titles']);
+        $cf_cookie = trim($_POST['cf_cookie'] ?? '');
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $url = trim($url);
@@ -403,6 +404,11 @@ class AdminController
 
                 try {
                     $pdo = \App\Core\Database::connect();
+                    // Set manual Cloudflare cookie override for all scraper http_get calls
+                    if ($cf_cookie !== '') {
+                        $GLOBALS['_SCRAPER_CF_COOKIE'] = 'cf_clearance=' . $cf_cookie;
+                        $logger("Using manual cf_clearance cookie for Cloudflare bypass.");
+                    }
                     if ($source === 'fanmtl') {
                          $newId = fanmtl_import_to_db(
                             $pdo,
@@ -481,6 +487,9 @@ class AdminController
                          htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8') .
                          "</div>\n";
                     echo "</div>\n";
+                } finally {
+                    // Always clear the cookie override after the import attempt
+                    unset($GLOBALS['_SCRAPER_CF_COOKIE']);
                 }
 
                 View::render('admin/import_log_end');
@@ -497,7 +506,8 @@ class AdminController
             'end' => $end,
             'throttle' => $throttle,
             'preserve' => $preserve,
-            'throttleDefault' => $throttleDefault
+            'throttleDefault' => $throttleDefault,
+            'cf_cookie' => $cf_cookie ?? '',
         ]);
     }
 }

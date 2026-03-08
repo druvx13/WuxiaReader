@@ -21,6 +21,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/cf_bypass.php';
+
 const NOVELHALL_ALLOWED_HOSTS = array(
     'novelhall.com',
     'www.novelhall.com'
@@ -53,19 +55,24 @@ function nh_http_get(string $url, array $headers = array(), int $timeout = 60): 
         'Sec-Fetch-User: ?1',
     );
     $mergedHeaders = !empty($headers) ? array_merge($defaultHeaders, $headers) : $defaultHeaders;
-    curl_setopt_array($ch, array(
-        CURLOPT_URL => $url,
+    $opts = array(
+        CURLOPT_URL            => $url,
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_FOLLOWLOCATION => true,
-        CURLOPT_MAXREDIRS => 8,
-        CURLOPT_TIMEOUT => $timeout,
+        CURLOPT_MAXREDIRS      => 8,
+        CURLOPT_TIMEOUT        => $timeout,
         CURLOPT_CONNECTTIMEOUT => 20,
-        CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-        CURLOPT_HTTPHEADER => $mergedHeaders,
+        CURLOPT_USERAGENT      => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        CURLOPT_HTTPHEADER     => $mergedHeaders,
         CURLOPT_SSL_VERIFYPEER => true,
-        CURLOPT_ENCODING => '',
-        CURLOPT_COOKIEFILE => '',
-    ));
+        CURLOPT_ENCODING       => '',
+        CURLOPT_COOKIEFILE     => '',
+    );
+    $extraCookie = cf_get_extra_cookie();
+    if ($extraCookie !== '') {
+        $opts[CURLOPT_COOKIE] = $extraCookie;
+    }
+    curl_setopt_array($ch, $opts);
     $resp = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
     $err = curl_error($ch);
@@ -74,7 +81,11 @@ function nh_http_get(string $url, array $headers = array(), int $timeout = 60): 
         throw new RuntimeException("Network error: " . $err);
     }
     if ($httpCode === 403) {
-        throw new RuntimeException("HTTP 403 (Forbidden): " . $url . " — the site may be protected by Cloudflare or another bot-detection service. Try again later or use a different source.");
+        $flareSolverrHtml = cf_try_flaresolverr($url, max(120, $timeout));
+        if ($flareSolverrHtml !== null) {
+            return $flareSolverrHtml;
+        }
+        throw new RuntimeException("HTTP 403 (Forbidden): " . $url . " — Cloudflare or bot-detection blocked this request. Options: (1) Configure FLARESOLVERR_URL in .env for automatic bypass, or (2) open the URL in your browser, solve the challenge, copy the cf_clearance cookie and paste it into the import form's Cloudflare Bypass field.");
     }
     if ($httpCode >= 400) {
         throw new RuntimeException("HTTP " . $httpCode . ": " . $url);
