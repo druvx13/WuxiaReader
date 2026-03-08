@@ -22,6 +22,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/cf_bypass.php';
+
 const ALLNOVEL_ALLOWED_HOSTS = array(
     'allnovel.org', 'www.allnovel.org'
 );
@@ -32,24 +34,49 @@ const ALLNOVEL_MINIMUM_THROTTLE = 1.0; // seconds
 
 function anv_http_get(string $url, array $headers = array(), int $timeout = 60): string {
     $ch = curl_init();
-    curl_setopt_array($ch, array(
-        CURLOPT_URL => $url,
+    $defaultHeaders = array(
+        'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Language: en-US,en;q=0.9',
+        'Cache-Control: max-age=0',
+        'Connection: keep-alive',
+        'Upgrade-Insecure-Requests: 1',
+        'Sec-Fetch-Dest: document',
+        'Sec-Fetch-Mode: navigate',
+        'Sec-Fetch-Site: none',
+        'Sec-Fetch-User: ?1',
+    );
+    $mergedHeaders = !empty($headers) ? array_merge($defaultHeaders, $headers) : $defaultHeaders;
+    $opts = array(
+        CURLOPT_URL            => $url,
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_FOLLOWLOCATION => true,
-        CURLOPT_MAXREDIRS => 8,
-        CURLOPT_TIMEOUT => $timeout,
+        CURLOPT_MAXREDIRS      => 8,
+        CURLOPT_TIMEOUT        => $timeout,
         CURLOPT_CONNECTTIMEOUT => 20,
-        CURLOPT_USERAGENT => 'Mozilla/5.0 (compatible; AllNovelImporter/1.0)',
-        CURLOPT_HTTPHEADER => $headers,
+        CURLOPT_USERAGENT      => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        CURLOPT_HTTPHEADER     => $mergedHeaders,
         CURLOPT_SSL_VERIFYPEER => true,
-        CURLOPT_ENCODING => ''
-    ));
+        CURLOPT_ENCODING       => '',
+        CURLOPT_COOKIEFILE     => '',
+    );
+    $extraCookie = cf_get_extra_cookie();
+    if ($extraCookie !== '') {
+        $opts[CURLOPT_COOKIE] = $extraCookie;
+    }
+    curl_setopt_array($ch, $opts);
     $resp = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
     $err = curl_error($ch);
     curl_close($ch);
     if ($resp === false) {
         throw new RuntimeException("Network error: " . $err);
+    }
+    if ($httpCode === 403) {
+        $flareSolverrHtml = cf_try_flaresolverr($url, max(120, $timeout));
+        if ($flareSolverrHtml !== null) {
+            return $flareSolverrHtml;
+        }
+        throw new RuntimeException("HTTP 403 (Forbidden): " . $url . " — Cloudflare or bot-detection blocked this request. Options: (1) Configure FLARESOLVERR_URL in .env for automatic bypass, or (2) open the URL in your browser, solve the challenge, copy the cf_clearance cookie and paste it into the import form's Cloudflare Bypass field.");
     }
     if ($httpCode >= 400) {
         throw new RuntimeException("HTTP " . $httpCode . ": " . $url);
@@ -66,7 +93,7 @@ function anv_throttle(float $seconds): void {
 function anv_load_dom(string $html): array {
     libxml_use_internal_errors(true);
     $doc = new DOMDocument();
-    $doc->loadHTML('<?xml encoding="utf-8" ?>' . $html, LIBXML_NOWARNING | LIBXML_NOERROR);
+    $doc->loadHTML('<meta charset="utf-8">' . $html, LIBXML_NOWARNING | LIBXML_NOERROR);
     $xpath = new DOMXPath($doc);
     libxml_clear_errors();
     return array($doc, $xpath);
@@ -214,6 +241,8 @@ function anv_get_toc_page_urls(DOMDocument $doc, string $baseUrl): array {
             parse_str($parts['query'], $q);
             if (isset($q['page_num'])) {
                 $limitAttr = $q['page_num'];
+            } elseif (isset($q['page'])) {
+                $limitAttr = $q['page'];
             }
         }
     }
@@ -480,8 +509,14 @@ function allnovel_import_to_db(
     $total    = count($novel['chapters']);
     $startIdx = max(0, $startChapter - 1);
     $endIdx   = $endChapter ? min($total - 1, $endChapter - 1) : $total - 1;
+    if ($startIdx >= $total) {
+        throw new RuntimeException(
+            "Start chapter {$startChapter} exceeds the {$total} chapter(s) found on this page. "
+            . "The site may paginate its chapter list — try importing in smaller batches."
+        );
+    }
     if ($endIdx < $startIdx) {
-        $endIdx = $startIdx;
+        $endIdx = $total - 1;
     }
 
     $pdo->beginTransaction();

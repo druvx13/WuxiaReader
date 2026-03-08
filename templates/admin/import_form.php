@@ -66,6 +66,32 @@ $base = Config::get('BASE_URL');
                 <span style="font-size:0.85rem;">Preserve original chapter titles (no renumbering)</span>
             </label>
 
+            <details style="margin-top:0.5rem;">
+                <summary style="cursor:pointer;font-size:0.85rem;color:var(--muted);user-select:none;">
+                    ▶ Cloudflare Bypass (optional)
+                </summary>
+                <div style="margin-top:0.75rem;padding:0.85rem;background:var(--surface2,#f3f4f6);border-radius:6px;border:1px solid var(--border,#ddd);">
+                    <p style="margin:0 0 0.5rem;font-size:0.82rem;color:var(--muted);">
+                        Use this if the import fails with <strong>HTTP 403</strong> (Cloudflare challenge). Two options:
+                    </p>
+                    <ol style="margin:0 0 0.75rem;padding-left:1.2rem;font-size:0.82rem;color:var(--muted);line-height:1.6;">
+                        <li><strong>Automatic (recommended):</strong> Run <a href="https://github.com/FlareSolverr/FlareSolverr" target="_blank" rel="noopener">FlareSolverr</a> and add
+                            <code style="font-size:0.8rem;background:var(--surface,#fff);padding:1px 4px;border-radius:3px;">FLARESOLVERR_URL=http://localhost:8191</code>
+                            to your <code style="font-size:0.8rem;">.env</code> — challenges are solved automatically.</li>
+                        <li><strong>Manual cookie:</strong> Open the novel URL in your browser, let Cloudflare verify you,
+                            then open DevTools → Application → Cookies → find <code style="font-size:0.8rem;">cf_clearance</code>
+                            and paste its value below.</li>
+                    </ol>
+                    <label style="font-size:0.85rem;">
+                        <code style="font-size:0.8rem;">cf_clearance</code> cookie value (optional)
+                        <input type="text" name="cf_cookie"
+                               placeholder="Paste cf_clearance value here…"
+                               value="<?= htmlspecialchars($cf_cookie ?? '') ?>"
+                               style="font-family:monospace;font-size:0.8rem;">
+                    </label>
+                </div>
+            </details>
+
             <button type="submit" class="btn btn--admin">Import</button>
         </form>
     </section>

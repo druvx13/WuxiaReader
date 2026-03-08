@@ -21,6 +21,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/cf_bypass.php';
+
 const READNOVELFULL_ALLOWED_HOSTS = array(
     'readnovelfull.com', 'www.readnovelfull.com'
 );
@@ -31,24 +33,49 @@ const READNOVELFULL_MINIMUM_THROTTLE = 1.0; // seconds
 
 function rnf_http_get(string $url, array $headers = array(), int $timeout = 60): string {
     $ch = curl_init();
-    curl_setopt_array($ch, array(
-        CURLOPT_URL => $url,
+    $defaultHeaders = array(
+        'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Language: en-US,en;q=0.9',
+        'Cache-Control: max-age=0',
+        'Connection: keep-alive',
+        'Upgrade-Insecure-Requests: 1',
+        'Sec-Fetch-Dest: document',
+        'Sec-Fetch-Mode: navigate',
+        'Sec-Fetch-Site: none',
+        'Sec-Fetch-User: ?1',
+    );
+    $mergedHeaders = !empty($headers) ? array_merge($defaultHeaders, $headers) : $defaultHeaders;
+    $opts = array(
+        CURLOPT_URL            => $url,
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_FOLLOWLOCATION => true,
-        CURLOPT_MAXREDIRS => 8,
-        CURLOPT_TIMEOUT => $timeout,
+        CURLOPT_MAXREDIRS      => 8,
+        CURLOPT_TIMEOUT        => $timeout,
         CURLOPT_CONNECTTIMEOUT => 20,
-        CURLOPT_USERAGENT => 'Mozilla/5.0 (compatible; ReadNovelFullImporter/1.0)',
-        CURLOPT_HTTPHEADER => $headers,
+        CURLOPT_USERAGENT      => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        CURLOPT_HTTPHEADER     => $mergedHeaders,
         CURLOPT_SSL_VERIFYPEER => true,
-        CURLOPT_ENCODING => ''
-    ));
+        CURLOPT_ENCODING       => '',
+        CURLOPT_COOKIEFILE     => '',
+    );
+    $extraCookie = cf_get_extra_cookie();
+    if ($extraCookie !== '') {
+        $opts[CURLOPT_COOKIE] = $extraCookie;
+    }
+    curl_setopt_array($ch, $opts);
     $resp = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
     $err = curl_error($ch);
     curl_close($ch);
     if ($resp === false) {
         throw new RuntimeException("Network error: " . $err);
+    }
+    if ($httpCode === 403) {
+        $flareSolverrHtml = cf_try_flaresolverr($url, max(120, $timeout));
+        if ($flareSolverrHtml !== null) {
+            return $flareSolverrHtml;
+        }
+        throw new RuntimeException("HTTP 403 (Forbidden): " . $url . " — Cloudflare or bot-detection blocked this request. Options: (1) Configure FLARESOLVERR_URL in .env for automatic bypass, or (2) open the URL in your browser, solve the challenge, copy the cf_clearance cookie and paste it into the import form's Cloudflare Bypass field.");
     }
     if ($httpCode >= 400) {
         throw new RuntimeException("HTTP " . $httpCode . ": " . $url);
@@ -65,7 +92,7 @@ function rnf_throttle(float $seconds): void {
 function rnf_load_dom(string $html): array {
     libxml_use_internal_errors(true);
     $doc = new DOMDocument();
-    $doc->loadHTML('<?xml encoding="utf-8" ?>' . $html, LIBXML_NOWARNING | LIBXML_NOERROR);
+    $doc->loadHTML('<meta charset="utf-8">' . $html, LIBXML_NOWARNING | LIBXML_NOERROR);
     $xpath = new DOMXPath($doc);
     libxml_clear_errors();
     return array($doc, $xpath);
@@ -175,7 +202,38 @@ function rnf_clean_fragment_html(string $html, string $baseUrl = ''): string {
 function rnf_get_all_chapters(DOMDocument $doc, DOMXPath $xpath, string $baseUrl): array {
     $out = array();
 
-    // 1. Try to find existing ul.list-chapter
+    // 1. Prefer the AJAX chapter-archive endpoint — it always returns the COMPLETE list.
+    //    The inline ul.list-chapter on the novel page is a partial rendering (~30 chapters)
+    //    and must not be trusted as the full list.
+    $ratingDiv = $xpath->query("//div[@id='rating']")->item(0);
+    if ($ratingDiv instanceof DOMElement) {
+        $novelId = trim($ratingDiv->getAttribute('data-novel-id'));
+        if ($novelId !== '') {
+            $ajaxUrl = "https://readnovelfull.com/ajax/chapter-archive?novelId=" . urlencode($novelId);
+            try {
+                $html = rnf_http_get($ajaxUrl);
+                list($ajaxDoc, $ajaxXpath) = rnf_load_dom($html);
+                $ajaxLinks = $ajaxXpath->query("//ul[contains(@class,'list-chapter')]//a");
+                if ($ajaxLinks && $ajaxLinks->length > 0) {
+                    foreach ($ajaxLinks as $a) {
+                        /** @var DOMElement $a */
+                        $href = trim($a->getAttribute('href'));
+                        if ($href === '') continue;
+                        $href = rnf_url_join($baseUrl, $href);
+                        $titleText = trim(preg_replace('/\s+/', ' ', $a->textContent));
+                        $out[] = array('name' => $titleText, 'url' => $href);
+                    }
+                    if (!empty($out)) {
+                        return $out;
+                    }
+                }
+            } catch (Exception $e) {
+                // AJAX failed — fall through to inline HTML list
+            }
+        }
+    }
+
+    // 2. Fallback: inline ul.list-chapter (may be partial for large novels)
     $links = $xpath->query("//ul[contains(@class,'list-chapter')]//a");
     if ($links && $links->length > 0) {
         foreach ($links as $a) {
@@ -185,40 +243,6 @@ function rnf_get_all_chapters(DOMDocument $doc, DOMXPath $xpath, string $baseUrl
             $href = rnf_url_join($baseUrl, $href);
             $titleText = trim(preg_replace('/\s+/', ' ', $a->textContent));
             $out[] = array('name' => $titleText, 'url' => $href);
-        }
-    }
-
-    // 2. If list is found, return it.
-    // Note: The provided JS code says "if (0 < chapters.length) return ... else fetch".
-    // So if we found chapters, we assume that's it (or that it's a static page).
-    if (!empty($out)) {
-        return $out;
-    }
-
-    // 3. Fallback: Fetch via AJAX using novelId from div#rating
-    $ratingDiv = $xpath->query("//div[@id='rating']")->item(0);
-    if ($ratingDiv instanceof DOMElement) {
-        $novelId = $ratingDiv->getAttribute('data-novel-id');
-        if ($novelId) {
-            $ajaxUrl = "https://readnovelfull.com/ajax/chapter-archive?novelId=" . urlencode($novelId);
-            try {
-                // The response is usually an HTML snippet containing the <ul> list
-                $html = rnf_http_get($ajaxUrl);
-                list($ajaxDoc, $ajaxXpath) = rnf_load_dom($html);
-                $ajaxLinks = $ajaxXpath->query("//ul[contains(@class,'list-chapter')]//a");
-                if ($ajaxLinks) {
-                    foreach ($ajaxLinks as $a) {
-                        /** @var DOMElement $a */
-                        $href = trim($a->getAttribute('href'));
-                        if ($href === '') continue;
-                        $href = rnf_url_join($baseUrl, $href); // AJAX response might have relative links? Usually absolute or root-relative.
-                        $titleText = trim(preg_replace('/\s+/', ' ', $a->textContent));
-                        $out[] = array('name' => $titleText, 'url' => $href);
-                    }
-                }
-            } catch (Exception $e) {
-                // Ignore AJAX failure
-            }
         }
     }
 
@@ -360,8 +384,14 @@ function readnovelfull_import_to_db(
     $total    = count($novel['chapters']);
     $startIdx = max(0, $startChapter - 1);
     $endIdx   = $endChapter ? min($total - 1, $endChapter - 1) : $total - 1;
+    if ($startIdx >= $total) {
+        throw new RuntimeException(
+            "Start chapter {$startChapter} exceeds the {$total} chapter(s) found on this page. "
+            . "The site may paginate its chapter list — try importing in smaller batches."
+        );
+    }
     if ($endIdx < $startIdx) {
-        $endIdx = $startIdx;
+        $endIdx = $total - 1;
     }
 
     $pdo->beginTransaction();

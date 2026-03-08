@@ -1,46 +1,115 @@
-# Architectural Improvements
+# Architecture
 
-This repository has been refactored to follow the Model-View-Controller (MVC) architectural pattern. This improves code organization, maintainability, and security.
+This repository follows the Model-View-Controller (MVC) architectural pattern. This improves code organisation, maintainability, and security.
 
-## Structure
+## Directory Structure
 
-*   `public/`: Web root directory. Contains the entry point `index.php` and static assets.
-    *   `assets/`: CSS, JS, and images.
-    *   `uploads/`: User uploaded content (e.g., covers).
-    *   `index.php`: The front controller.
-    *   `autoload.php`: Simple SPL autoloader.
-*   `src/`: Application source code.
-    *   `Core/`: Core framework components (Config, Database, Router, View).
-    *   `Controllers/`: Controllers handling user input and application logic.
-    *   `Models/`: Data models for interacting with the database.
-    *   `Services/`: Helper services (e.g., scrapers).
-    *   `Views/`: (Not used directly, templates are in `templates/` to keep them separate from logic).
-*   `templates/`: HTML templates for views.
-*   `.env`: Environment variables (database credentials, etc.). **Do not commit this file.**
-*   `.env.example`: Example environment variables file.
+```
+WuxiaReader/
+├── public/                  Web root (point your server here)
+│   ├── assets/
+│   │   ├── fonts/           Locally-hosted web fonts (Lora, woff2)
+│   │   ├── app.js           Front-end JavaScript (IIFE, no build step)
+│   │   └── style.css        Main stylesheet (CSS custom properties + responsive)
+│   ├── uploads/             User-uploaded cover images (created at runtime)
+│   ├── .htaccess            Apache rewrite rules for the front controller
+│   ├── autoload.php         PSR-4 autoloader (App\ → src/)
+│   └── index.php            Front controller – bootstraps & routes all requests
+│
+├── src/                     Application source code (outside web root)
+│   ├── Controllers/
+│   │   ├── AdminController.php   Admin panel + novel/chapter import
+│   │   ├── AuthController.php    Login, signup, logout
+│   │   ├── HomeController.php    Home / novel listing
+│   │   └── NovelController.php   Novel detail, chapter reader, like, comment (AJAX)
+│   ├── Core/
+│   │   ├── Config.php       .env loader (key=value parser)
+│   │   ├── Database.php     PDO singleton
+│   │   ├── Router.php       Lightweight regex/exact-match router
+│   │   └── View.php         Template renderer + redirect helper
+│   ├── Models/
+│   │   ├── Chapter.php      Chapter CRUD + prev/next navigation
+│   │   ├── Comment.php      Comment retrieval + creation
+│   │   ├── Like.php         Toggle-like with transaction safety
+│   │   ├── Novel.php        Novel listing + creation
+│   │   └── User.php         User lookup + creation (password_hash)
+│   └── Services/            Standalone scraper functions (no namespace)
+│       ├── allnovel_scraper.php
+│       ├── fanmtl_scraper.php
+│       ├── novelfull_scraper.php
+│       ├── novelhall_scraper.php
+│       └── readnovelfull_scraper.php
+│
+├── templates/               PHP view templates
+│   ├── admin/
+│   │   ├── add_chapter.php
+│   │   ├── add_novel.php
+│   │   ├── import_form.php
+│   │   ├── import_log_end.php
+│   │   └── import_log_start.php
+│   ├── partials/
+│   │   └── comment.php      AJAX-rendered comment partial
+│   ├── 404.php
+│   ├── chapter.php
+│   ├── footer.php
+│   ├── header.php
+│   ├── home.php
+│   ├── login.php
+│   ├── novel.php
+│   └── signup.php
+│
+├── .env                     Runtime secrets (not committed)
+├── .env.example             Template for .env
+├── .htaccess                Root-level redirect into public/
+├── init_db.sql              Database schema
+└── README.md
+```
 
-## Improvements
+## Key Design Decisions
 
-1.  **MVC Architecture**: Separated logic (Controllers), data (Models), and presentation (Views/Templates).
-2.  **Front Controller**: `public/index.php` serves as the single entry point, handling routing and bootstrapping.
-3.  **Routing**: A `Router` class handles URL mapping to controllers, replacing the large `if/else` block in the original `index.php`.
-4.  **Database Abstraction**: `Database` class manages the PDO connection (Singleton pattern), and Models encapsulate SQL queries.
-5.  **Configuration Management**: `Config` class loads settings from a `.env` file, preventing hardcoded credentials in the code.
-6.  **Security**:
-    *   Moved credentials to `.env`.
-    *   Input handling is done in Controllers.
-    *   Views escape output using `htmlspecialchars` (via `h()` helper or direct calls).
-    *   `p.php` (which exposed password hashing) was removed.
-7.  **Autoloading**: A simple autoloader maps `App\` namespace to the `src/` directory.
+### Front Controller
+`public/index.php` is the single entry point. It bootstraps the session, loads
+configuration, and hands every request to the `Router`.
+
+### Router
+`App\Core\Router` supports exact-path matches and `#regex#` patterns.  
+On a 404 it calls `View::render('404')` so the proper layout is shown.
+
+### Autoloader
+A single `spl_autoload_register` in `public/autoload.php` maps `App\` → `src/`.  
+No Composer is required.
+
+### View
+`App\Core\View::render($view, $data)` extracts `$data` into local variables and
+`require`s the matching template from `templates/`.  
+`View::redirect($path)` prepends `BASE_URL` for relative paths.
+
+### Models
+Static-method models wrap all SQL via PDO prepared statements. Database::connect()
+returns a lazily-created singleton PDO instance.
+
+### Front-End
+* `style.css` – CSS custom properties, responsive grid, mobile hamburger nav,
+  reading-progress bar, scroll-to-top, font-size controls.
+* `app.js` – wrapped in an IIFE, reads `BASE_URL` from a `<meta>` tag so AJAX
+  calls work correctly regardless of server path.  Features: mobile nav toggle,
+  like/comment AJAX, distraction-free mode, reader font-size persistence
+  (localStorage), scroll-to-top, reading progress bar.
+* Lora font is served locally from `public/assets/fonts/` with Google Fonts as
+  a `src()` fallback in `@font-face`.
 
 ## Setup
 
-1.  Copy `.env.example` to `.env` and update the values with your database credentials.
-2.  Configure your web server to point the document root to the `public/` directory.
-3.  Ensure `mod_rewrite` (Apache) or equivalent is enabled to route all requests to `index.php`.
+1. Copy `.env.example` → `.env` and fill in database credentials and `BASE_URL`.
+2. Import `init_db.sql` into your MySQL database.
+3. Point your web server document root to `public/`.
+4. Ensure `mod_rewrite` (Apache) is enabled; the `.htaccess` files handle routing.
+5. Make `public/uploads/` writable by the web server (created automatically on
+   first upload).
 
-## Deployment
+## Deployment Checklist
 
-*   Ensure `public/` is the web root.
-*   Ensure `src/` and `.env` are outside the web root or protected from direct access.
-*   Ensure `public/uploads` is writable by the web server.
+* Web root → `public/`
+* `src/` and `.env` are above the web root or blocked from direct access.
+* `public/uploads/` is writable.
+* PHP ≥ 8.0, MySQL ≥ 5.7, PDO, cURL, DOM/XML extensions enabled.

@@ -64,6 +64,7 @@ $router->add('ANY', '/admin/import-fanmtl', [AdminController::class, 'importFanm
 $router->add('ANY', '/admin/import-novelhall', [AdminController::class, 'importNovelhall']);
 $router->add('ANY', '/admin/import-allnovel', [AdminController::class, 'importAllnovel']);
 $router->add('ANY', '/admin/import-readnovelfull', [AdminController::class, 'importReadnovelfull']);
+$router->add('ANY', '/admin/import-novelfull', [AdminController::class, 'importNovelfull']);
 
 // Dispatch
 $router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);

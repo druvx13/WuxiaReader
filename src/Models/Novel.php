@@ -63,11 +63,11 @@ class Novel
     /**
      * Creates a new novel.
      *
-     * @param string $title       The title of the novel.
-     * @param string $cover_url   The URL of the cover image.
-     * @param string $description The description/summary of the novel.
-     * @param string $author      The author of the novel.
-     * @param string $tags        Comma-separated tags for the novel.
+     * @param string      $title       The title of the novel.
+     * @param string|null $cover_url   The cover image as a data URL or external URL, or null.
+     * @param string      $description The description/summary of the novel.
+     * @param string      $author      The author of the novel.
+     * @param string      $tags        Comma-separated tags for the novel.
      * @return string|false The ID of the created novel or false on failure.
      */
     public static function create($title, $cover_url, $description, $author, $tags)
@@ -85,5 +85,20 @@ class Novel
             $tags
         ]);
         return $pdo->lastInsertId();
+    }
+
+    /**
+     * Updates the cover URL for a novel.
+     *
+     * @param int         $id       The ID of the novel.
+     * @param string|null $coverUrl The new cover value (data URL, external URL, or null).
+     * @return bool True if the row was found and updated; false otherwise.
+     */
+    public static function updateCoverUrl($id, $coverUrl): bool
+    {
+        $pdo  = Database::connect();
+        $stmt = $pdo->prepare("UPDATE novels SET cover_url = ? WHERE id = ?");
+        $stmt->execute([$coverUrl, $id]);
+        return $stmt->rowCount() > 0;
     }
 }

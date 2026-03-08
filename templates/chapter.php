@@ -39,26 +39,44 @@ $base = Config::get('BASE_URL');
                     <?php endif; ?>
                 </div>
 
-                <div class="like-wrapper">
-                    <button
-                        class="like-button <?= $liked_by_user ? 'like-button--active' : '' ?>"
-                        data-target-type="chapter"
-                        data-target-id="<?= (int)$chapter['id'] ?>"
-                        data-liked="<?= $liked_by_user ? '1' : '0' ?>"
-                    >
-                        <span class="like-button__icon"><?= $liked_by_user ? '♥' : '♡' ?></span>
-                        <span class="like-button__count"><?= $likes_count ?></span>
-                        <span class="like-button__label">Like</span>
-                    </button>
-                </div>
+                <div class="reader-controls">
+                    <div class="font-size-controls" aria-label="Font size">
+                        <button class="chapter-nav__btn font-size-btn" id="font-decrease" aria-label="Decrease font size">A−</button>
+                        <button class="chapter-nav__btn font-size-btn" id="font-increase" aria-label="Increase font size">A+</button>
+                    </div>
 
-                <button class="distraction-toggle" data-mode="normal">Distraction-free</button>
+                    <div class="like-wrapper">
+                        <button
+                            class="like-button <?= $liked_by_user ? 'like-button--active' : '' ?>"
+                            data-target-type="chapter"
+                            data-target-id="<?= (int)$chapter['id'] ?>"
+                            data-liked="<?= $liked_by_user ? '1' : '0' ?>"
+                        >
+                            <span class="like-button__icon"><?= $liked_by_user ? '♥' : '♡' ?></span>
+                            <span class="like-button__count"><?= $likes_count ?></span>
+                            <span class="like-button__label">Like</span>
+                        </button>
+                    </div>
+
+                    <button class="distraction-toggle" data-mode="normal">Distraction-free</button>
+                </div>
             </div>
         </header>
 
         <section class="chapter-content" id="chapter-content">
             <div class="chapter-text">
                 <?= nl2br(htmlspecialchars($chapter['content'])) ?>
+            </div>
+        </section>
+
+        <section class="chapter-bottom-nav">
+            <div class="chapter-nav">
+                <?php if ($prev): ?>
+                    <a class="chapter-nav__btn" href="<?= $base ?>/chapter/<?= (int)$prev['id'] ?>">← Previous</a>
+                <?php endif; ?>
+                <?php if ($next): ?>
+                    <a class="chapter-nav__btn" href="<?= $base ?>/chapter/<?= (int)$next['id'] ?>">Next →</a>
+                <?php endif; ?>
             </div>
         </section>
 

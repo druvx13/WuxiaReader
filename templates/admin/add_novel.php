@@ -43,12 +43,12 @@ $base = Config::get('BASE_URL');
             </label>
 
             <label>
-                Cover image (upload)
-                <input type="file" name="cover_file" accept="image/jpeg,image/png,image/webp">
+                Cover image (upload – stored as data URL in database)
+                <input type="file" name="cover_file" accept="image/jpeg,image/png,image/webp,image/gif">
             </label>
 
             <label>
-                OR cover URL (optional)
+                OR cover image URL (fetched and stored as data URL)
                 <input type="url" name="cover_url" placeholder="https://…" value="<?= htmlspecialchars($_POST['cover_url'] ?? '') ?>">
             </label>
 

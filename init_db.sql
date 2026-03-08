@@ -26,7 +26,7 @@ CREATE TABLE users (
 CREATE TABLE novels (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   title VARCHAR(255) NOT NULL,
-  cover_url VARCHAR(500) DEFAULT NULL,
+  cover_url MEDIUMTEXT DEFAULT NULL,
   description TEXT,
   author VARCHAR(255),
   tags TEXT,
