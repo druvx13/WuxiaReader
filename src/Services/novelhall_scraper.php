@@ -41,6 +41,18 @@ const NOVELHALL_MINIMUM_THROTTLE = 3.0; // seconds
  */
 function nh_http_get(string $url, array $headers = array(), int $timeout = 60): string {
     $ch = curl_init();
+    $defaultHeaders = array(
+        'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Language: en-US,en;q=0.9',
+        'Cache-Control: max-age=0',
+        'Connection: keep-alive',
+        'Upgrade-Insecure-Requests: 1',
+        'Sec-Fetch-Dest: document',
+        'Sec-Fetch-Mode: navigate',
+        'Sec-Fetch-Site: none',
+        'Sec-Fetch-User: ?1',
+    );
+    $mergedHeaders = !empty($headers) ? array_merge($defaultHeaders, $headers) : $defaultHeaders;
     curl_setopt_array($ch, array(
         CURLOPT_URL => $url,
         CURLOPT_RETURNTRANSFER => true,
@@ -48,10 +60,11 @@ function nh_http_get(string $url, array $headers = array(), int $timeout = 60): 
         CURLOPT_MAXREDIRS => 8,
         CURLOPT_TIMEOUT => $timeout,
         CURLOPT_CONNECTTIMEOUT => 20,
-        CURLOPT_USERAGENT => 'Mozilla/5.0 (compatible; NovelhallImporter/1.0)',
-        CURLOPT_HTTPHEADER => $headers,
+        CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        CURLOPT_HTTPHEADER => $mergedHeaders,
         CURLOPT_SSL_VERIFYPEER => true,
-        CURLOPT_ENCODING => ''
+        CURLOPT_ENCODING => '',
+        CURLOPT_COOKIEFILE => '',
     ));
     $resp = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
@@ -59,6 +72,9 @@ function nh_http_get(string $url, array $headers = array(), int $timeout = 60): 
     curl_close($ch);
     if ($resp === false) {
         throw new RuntimeException("Network error: " . $err);
+    }
+    if ($httpCode === 403) {
+        throw new RuntimeException("HTTP 403 (Forbidden): " . $url . " — the site may be protected by Cloudflare or another bot-detection service. Try again later or use a different source.");
     }
     if ($httpCode >= 400) {
         throw new RuntimeException("HTTP " . $httpCode . ": " . $url);
