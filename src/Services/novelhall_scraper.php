@@ -89,7 +89,7 @@ function nh_throttle(float $seconds): void {
 function nh_load_dom(string $html): array {
     libxml_use_internal_errors(true);
     $doc = new DOMDocument();
-    $doc->loadHTML('<?xml encoding="utf-8" ?>' . $html, LIBXML_NOWARNING | LIBXML_NOERROR);
+    $doc->loadHTML('<meta charset="utf-8">' . $html, LIBXML_NOWARNING | LIBXML_NOERROR);
     $xpath = new DOMXPath($doc);
     libxml_clear_errors();
     return array($doc, $xpath);
