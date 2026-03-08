@@ -65,7 +65,7 @@ function rnf_throttle(float $seconds): void {
 function rnf_load_dom(string $html): array {
     libxml_use_internal_errors(true);
     $doc = new DOMDocument();
-    $doc->loadHTML('<?xml encoding="utf-8" ?>' . $html, LIBXML_NOWARNING | LIBXML_NOERROR);
+    $doc->loadHTML('<meta charset="utf-8">' . $html, LIBXML_NOWARNING | LIBXML_NOERROR);
     $xpath = new DOMXPath($doc);
     libxml_clear_errors();
     return array($doc, $xpath);
@@ -175,7 +175,38 @@ function rnf_clean_fragment_html(string $html, string $baseUrl = ''): string {
 function rnf_get_all_chapters(DOMDocument $doc, DOMXPath $xpath, string $baseUrl): array {
     $out = array();
 
-    // 1. Try to find existing ul.list-chapter
+    // 1. Prefer the AJAX chapter-archive endpoint — it always returns the COMPLETE list.
+    //    The inline ul.list-chapter on the novel page is a partial rendering (~30 chapters)
+    //    and must not be trusted as the full list.
+    $ratingDiv = $xpath->query("//div[@id='rating']")->item(0);
+    if ($ratingDiv instanceof DOMElement) {
+        $novelId = trim($ratingDiv->getAttribute('data-novel-id'));
+        if ($novelId !== '') {
+            $ajaxUrl = "https://readnovelfull.com/ajax/chapter-archive?novelId=" . urlencode($novelId);
+            try {
+                $html = rnf_http_get($ajaxUrl);
+                list($ajaxDoc, $ajaxXpath) = rnf_load_dom($html);
+                $ajaxLinks = $ajaxXpath->query("//ul[contains(@class,'list-chapter')]//a");
+                if ($ajaxLinks && $ajaxLinks->length > 0) {
+                    foreach ($ajaxLinks as $a) {
+                        /** @var DOMElement $a */
+                        $href = trim($a->getAttribute('href'));
+                        if ($href === '') continue;
+                        $href = rnf_url_join($baseUrl, $href);
+                        $titleText = trim(preg_replace('/\s+/', ' ', $a->textContent));
+                        $out[] = array('name' => $titleText, 'url' => $href);
+                    }
+                    if (!empty($out)) {
+                        return $out;
+                    }
+                }
+            } catch (Exception $e) {
+                // AJAX failed — fall through to inline HTML list
+            }
+        }
+    }
+
+    // 2. Fallback: inline ul.list-chapter (may be partial for large novels)
     $links = $xpath->query("//ul[contains(@class,'list-chapter')]//a");
     if ($links && $links->length > 0) {
         foreach ($links as $a) {
@@ -185,40 +216,6 @@ function rnf_get_all_chapters(DOMDocument $doc, DOMXPath $xpath, string $baseUrl
             $href = rnf_url_join($baseUrl, $href);
             $titleText = trim(preg_replace('/\s+/', ' ', $a->textContent));
             $out[] = array('name' => $titleText, 'url' => $href);
-        }
-    }
-
-    // 2. If list is found, return it.
-    // Note: The provided JS code says "if (0 < chapters.length) return ... else fetch".
-    // So if we found chapters, we assume that's it (or that it's a static page).
-    if (!empty($out)) {
-        return $out;
-    }
-
-    // 3. Fallback: Fetch via AJAX using novelId from div#rating
-    $ratingDiv = $xpath->query("//div[@id='rating']")->item(0);
-    if ($ratingDiv instanceof DOMElement) {
-        $novelId = $ratingDiv->getAttribute('data-novel-id');
-        if ($novelId) {
-            $ajaxUrl = "https://readnovelfull.com/ajax/chapter-archive?novelId=" . urlencode($novelId);
-            try {
-                // The response is usually an HTML snippet containing the <ul> list
-                $html = rnf_http_get($ajaxUrl);
-                list($ajaxDoc, $ajaxXpath) = rnf_load_dom($html);
-                $ajaxLinks = $ajaxXpath->query("//ul[contains(@class,'list-chapter')]//a");
-                if ($ajaxLinks) {
-                    foreach ($ajaxLinks as $a) {
-                        /** @var DOMElement $a */
-                        $href = trim($a->getAttribute('href'));
-                        if ($href === '') continue;
-                        $href = rnf_url_join($baseUrl, $href); // AJAX response might have relative links? Usually absolute or root-relative.
-                        $titleText = trim(preg_replace('/\s+/', ' ', $a->textContent));
-                        $out[] = array('name' => $titleText, 'url' => $href);
-                    }
-                }
-            } catch (Exception $e) {
-                // Ignore AJAX failure
-            }
         }
     }
 

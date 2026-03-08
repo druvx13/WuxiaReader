@@ -214,6 +214,8 @@ function anv_get_toc_page_urls(DOMDocument $doc, string $baseUrl): array {
             parse_str($parts['query'], $q);
             if (isset($q['page_num'])) {
                 $limitAttr = $q['page_num'];
+            } elseif (isset($q['page'])) {
+                $limitAttr = $q['page'];
             }
         }
     }
