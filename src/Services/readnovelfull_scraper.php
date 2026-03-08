@@ -360,8 +360,14 @@ function readnovelfull_import_to_db(
     $total    = count($novel['chapters']);
     $startIdx = max(0, $startChapter - 1);
     $endIdx   = $endChapter ? min($total - 1, $endChapter - 1) : $total - 1;
+    if ($startIdx >= $total) {
+        throw new RuntimeException(
+            "Start chapter {$startChapter} exceeds the {$total} chapter(s) found on this page. "
+            . "The site may paginate its chapter list — try importing in smaller batches."
+        );
+    }
     if ($endIdx < $startIdx) {
-        $endIdx = $startIdx;
+        $endIdx = $total - 1;
     }
 
     $pdo->beginTransaction();
