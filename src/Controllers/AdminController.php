@@ -33,6 +33,78 @@ use finfo;
 class AdminController
 {
     /**
+     * Converts an uploaded image file or an external image URL to a base64 data URL.
+     *
+     * For file uploads, reads directly from the temporary file.
+     * For external URLs, fetches the image via cURL.
+     *
+     * @param string      $source    Absolute filesystem path (for uploads) or HTTP/HTTPS URL.
+     * @param bool        $isFile    True when $source is a filesystem path; false for URLs.
+     * @param string|null &$mime     Will be set to the detected MIME type on success.
+     * @param array       &$errors   Array to append any error messages to.
+     * @return string|null           The data URL string on success, or null on failure.
+     */
+    private function imageToDataUrl(string $source, bool $isFile, ?string &$mime, array &$errors): ?string
+    {
+        $allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        $maxBytes     = 3 * 1024 * 1024; // 3 MB limit
+
+        if ($isFile) {
+            $raw = @file_get_contents($source);
+            if ($raw === false) {
+                $errors[] = "Could not read the uploaded cover image.";
+                return null;
+            }
+        } else {
+            // Validate URL scheme before fetching
+            $scheme = strtolower((string)parse_url($source, PHP_URL_SCHEME));
+            if (!in_array($scheme, ['http', 'https'], true)) {
+                $errors[] = "Cover URL must be an HTTP or HTTPS address.";
+                return null;
+            }
+
+            $ch = curl_init();
+            curl_setopt_array($ch, [
+                CURLOPT_URL            => $source,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_MAXREDIRS      => 5,
+                CURLOPT_TIMEOUT        => 15,
+                CURLOPT_USERAGENT      => 'Mozilla/5.0 WuxiaReader/1.0',
+            ]);
+            $raw   = curl_exec($ch);
+            $errno = curl_errno($ch);
+            curl_close($ch);
+
+            if ($errno || $raw === false) {
+                $errors[] = "Failed to fetch cover image from URL.";
+                return null;
+            }
+        }
+
+        if (strlen($raw) === 0) {
+            $errors[] = "Cover image is empty.";
+            return null;
+        }
+
+        if (strlen($raw) > $maxBytes) {
+            $errors[] = "Cover image too large (max 3 MB).";
+            return null;
+        }
+
+        // Detect MIME type from binary content
+        $fileInfo = new finfo(FILEINFO_MIME_TYPE);
+        $detected = $fileInfo->buffer($raw);
+        if (!in_array($detected, $allowedMimes, true)) {
+            $errors[] = "Invalid cover image type (allowed: JPG, PNG, WEBP, GIF).";
+            return null;
+        }
+
+        $mime = $detected;
+        return 'data:' . $detected . ';base64,' . base64_encode($raw);
+    }
+
+    /**
      * Ensures that the current user is an administrator.
      *
      * Redirects or exits with 403 Forbidden if not authorized.
@@ -81,10 +153,10 @@ class AdminController
         $errors = [];
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $title       = trim($_POST['title'] ?? '');
-            $author      = trim($_POST['author'] ?? '');
-            $tags        = trim($_POST['tags'] ?? '');
-            $description = trim($_POST['description'] ?? '');
+            $title            = trim($_POST['title'] ?? '');
+            $author           = trim($_POST['author'] ?? '');
+            $tags             = trim($_POST['tags'] ?? '');
+            $description      = trim($_POST['description'] ?? '');
             $cover_url_manual = trim($_POST['cover_url'] ?? '');
 
             if ($title === '') {
@@ -95,56 +167,21 @@ class AdminController
             }
 
             $final_cover_url = null;
+            $detectedMime    = null;
 
+            // Priority 1: uploaded file → convert to data URL
             if (!empty($_FILES['cover_file']) && $_FILES['cover_file']['error'] !== UPLOAD_ERR_NO_FILE) {
                 $file = $_FILES['cover_file'];
-
                 if ($file['error'] !== UPLOAD_ERR_OK) {
                     $errors[] = "Cover upload failed (error code " . (int)$file['error'] . ").";
                 } else {
-                    if ($file['size'] > 3 * 1024 * 1024) {
-                        $errors[] = "Cover image too large (max 3 MB).";
-                    } else {
-                        $finfo = new finfo(FILEINFO_MIME_TYPE);
-                        $mime  = $finfo->file($file['tmp_name']);
-                        $allowed = [
-                            'image/jpeg' => 'jpg',
-                            'image/png'  => 'png',
-                            'image/webp' => 'webp',
-                        ];
-                        if (!isset($allowed[$mime])) {
-                            $errors[] = "Invalid cover image type (allowed: JPG, PNG, WEBP).";
-                        } else {
-                            $ext = $allowed[$mime];
-
-                            $uploadDirFs = __DIR__ . '/../../public/uploads';
-                            if (!is_dir($uploadDirFs)) {
-                                if (!mkdir($uploadDirFs, 0755, true) && !is_dir($uploadDirFs)) {
-                                    $errors[] = "Cannot create uploads directory.";
-                                }
-                            }
-
-                            if (!$errors) {
-                                $basename = bin2hex(random_bytes(8)) . '.' . $ext;
-                                $targetFs = $uploadDirFs . '/' . $basename;
-
-                                if (!move_uploaded_file($file['tmp_name'], $targetFs)) {
-                                    $errors[] = "Failed to move uploaded cover image.";
-                                } else {
-                                    $final_cover_url = Config::get('BASE_URL') . '/uploads/' . $basename;
-                                }
-                            }
-                        }
-                    }
+                    $final_cover_url = $this->imageToDataUrl($file['tmp_name'], true, $detectedMime, $errors);
                 }
             }
 
+            // Priority 2: external URL → fetch and convert to data URL
             if (!$final_cover_url && $cover_url_manual !== '') {
-                if (strlen($cover_url_manual) > 500) {
-                    $errors[] = "Cover URL too long.";
-                } else {
-                    $final_cover_url = $cover_url_manual;
-                }
+                $final_cover_url = $this->imageToDataUrl($cover_url_manual, false, $detectedMime, $errors);
             }
 
             if (!$errors) {
@@ -155,11 +192,11 @@ class AdminController
 
         View::render('admin/add_novel', [
             'current_user' => $currentUser,
-            'errors' => $errors,
-            'title' => $title,
-            'author' => $author,
-            'tags' => $tags,
-            'description' => $description
+            'errors'       => $errors,
+            'title'        => $title,
+            'author'       => $author,
+            'tags'         => $tags,
+            'description'  => $description
         ]);
     }
 
@@ -420,6 +457,23 @@ class AdminController
                     }
 
                     echo '<div class="log-line log-line--done">Import finished. New novel ID: ' . (int)$newId . '.</div>';
+
+                    // Convert the scraped cover URL (if any) to a data URL so all images
+                    // are self-contained in the database.
+                    $importedNovel = \App\Models\Novel::find((int)$newId);
+                    if ($importedNovel && !empty($importedNovel['cover_url']) && strncmp($importedNovel['cover_url'], 'data:', 5) !== 0) {
+                        $logger("Fetching cover image to embed as data URL…");
+                        $convertErrors = [];
+                        $coverMime     = null;
+                        $dataUrl       = $this->imageToDataUrl($importedNovel['cover_url'], false, $coverMime, $convertErrors);
+                        if ($dataUrl) {
+                            \App\Models\Novel::updateCoverUrl((int)$newId, $dataUrl);
+                            $logger("Cover embedded as data URL (" . $coverMime . ").");
+                        } else {
+                            $logger("Could not embed cover (" . implode(', ', $convertErrors) . ") — keeping original URL.");
+                        }
+                    }
+
                     echo "</div>\n";
                     echo '<p style="margin-top:1rem;"><a class="btn btn--admin" href="' . Config::get('BASE_URL') . '/novel/' . (int)$newId . '">Open imported novel</a></p>';
                 } catch (\Throwable $e) {
