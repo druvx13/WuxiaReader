@@ -53,11 +53,13 @@ const NOVELFULL_ALLOWED_HOSTS = array(
     'novelfullbook.com', 'www.novelfullbook.com',
     'novelfulll.com', 'www.novelfulll.com',
     'novelhulk.net', 'www.novelhulk.net',
+    'novellume.com', 'www.novellume.com',
     'novelmax.net', 'www.novelmax.net',
     'novelnext.com', 'www.novelnext.com',
     'novelnext.dramanovels.io', 'www.novelnext.dramanovels.io',
     'novelnext.net', 'www.novelnext.net',
     'novelnextz.com', 'www.novelnextz.com',
+    'novelping.com', 'www.novelping.com',
     'noveltop1.org', 'www.noveltop1.org',
     'noveltrust.net', 'www.noveltrust.net',
     'novelusb.com', 'www.novelusb.com',
@@ -282,36 +284,40 @@ function nvf_get_toc_page_urls(DOMDocument $doc, string $baseUrl): array {
     $xpath = new DOMXPath($doc);
     $linkNode = $xpath->query("//li[contains(@class,'last')]//a")->item(0);
     if (!$linkNode instanceof DOMElement) {
-        return array($baseUrl);
+        return array();
     }
     $href = trim($linkNode->getAttribute('href'));
     if ($href === '') {
-        return array($baseUrl);
+        return array();
     }
     $href = nvf_url_join($baseUrl, $href);
 
     $limitAttr = $linkNode->getAttribute('data-page');
+    $pageIsOneIndexed = false;
     if ($limitAttr === null || $limitAttr === '') {
         $parts = parse_url($href);
         $limitAttr = null;
         if (!empty($parts['query'])) {
             parse_str($parts['query'], $q);
-            if (isset($q['page_num'])) {
-                $limitAttr = $q['page_num'];
-            } elseif (isset($q['page'])) {
+            if (isset($q['page'])) {
                 $limitAttr = $q['page'];
+                $pageIsOneIndexed = true;
+            } elseif (isset($q['page_num'])) {
+                $limitAttr = $q['page_num'];
             }
         }
     }
-    $limit = (int)($limitAttr !== null && $limitAttr !== '' ? $limitAttr : -1);
-    $limit = $limit + 1; // JS: parseInt(limit || "-1") + 1
+    $limit = $pageIsOneIndexed
+        ? (int)($limitAttr !== null && $limitAttr !== '' ? $limitAttr : 0)
+        : (int)($limitAttr !== null && $limitAttr !== '' ? $limitAttr : -1) + 1;
 
-    if ($limit <= 0) {
-        return array($baseUrl);
+    if ($limit <= 1) {
+        return array();
     }
 
     $urls = array();
-    for ($i = 1; $i <= $limit; $i++) {
+    // Page 1 is already available in the initial DOM.
+    for ($i = 2; $i <= $limit; $i++) {
         $urls[] = nvf_build_toc_page_url($href, $i);
     }
     return $urls;
@@ -322,11 +328,22 @@ function nvf_get_toc_page_urls(DOMDocument $doc, string $baseUrl): array {
  */
 function nvf_extract_partial_chapter_list(DOMDocument $doc, string $baseUrl): array {
     $xpath = new DOMXPath($doc);
-    $links = $xpath->query("//ul[contains(@class,'list-chapter')]//a");
+    $links = null;
+    $allUl = $xpath->query('//ul');
+    if ($allUl && $allUl->length === 0) {
+        $links = $xpath->query('//template//li//a');
+    }
+    if (!$links || $links->length === 0) {
+        $links = $xpath->query("//ul[contains(@class,'list-chapter')]//a | //*[(@id='list-chapter' or @id='idData')]//a[contains(@class,'con')]");
+    }
     $out   = array();
     if (!$links) {
         return $out;
     }
+
+    $host = (string)parse_url($baseUrl, PHP_URL_HOST);
+    $hostLower = strtolower($host);
+    $preferTitleAttribute = ($hostLower === 'novelping.com' || $hostLower === 'www.novelping.com');
 
     foreach ($links as $a) {
         /** @var DOMElement $a */
@@ -336,7 +353,13 @@ function nvf_extract_partial_chapter_list(DOMDocument $doc, string $baseUrl): ar
         }
         $href = nvf_url_join($baseUrl, $href);
 
-        $titleText = trim(preg_replace('/\s+/', ' ', $a->textContent));
+        $titleText = '';
+        if ($preferTitleAttribute) {
+            $titleText = trim(preg_replace('/\s+/', ' ', (string)$a->getAttribute('title')));
+        }
+        if ($titleText === '') {
+            $titleText = trim(preg_replace('/\s+/', ' ', $a->textContent));
+        }
         if ($titleText === '') {
             $titleText = 'Chapter';
         }
@@ -377,6 +400,9 @@ function novelfull_fetch_chapter_content(string $url, float $throttle = NOVELFUL
     }
 
     $titleNode = $xpath->query("//h2")->item(0);
+    if (!$titleNode) {
+        $titleNode = $xpath->query("//span[contains(@class,'chapter-heading-text')]")->item(0);
+    }
     $title = $titleNode ? trim(preg_replace('/\s+/', ' ', $titleNode->textContent)) : '';
 
     $contentHtml = $contentNode ? nvf_inner_html($contentNode) : '';
@@ -416,6 +442,12 @@ function novelfull_parse_novel_page(string $url, float $throttle = NOVELFULL_MIN
     // Title: h3.title
     $titleNode = $xpath->query("//h3[contains(@class,'title')]")->item(0);
     if (!$titleNode) {
+        $titleNode = $xpath->query("//a[contains(@class,'truyen-title')]")->item(0);
+    }
+    if (!$titleNode) {
+        $titleNode = $xpath->query("//h1[contains(@class,'tit')]")->item(0);
+    }
+    if (!$titleNode) {
         $titleNode = $xpath->query("//h1|//h2")->item(0);
     }
     if ($titleNode) {
@@ -437,9 +469,18 @@ function novelfull_parse_novel_page(string $url, float $throttle = NOVELFULL_MIN
             }
         }
     }
+    if ($novel['author'] === '') {
+        $authorCandidates = $xpath->query("//div[contains(@class,'item')][.//span[@title='Author']]//a[contains(@class,'a1')]");
+        if ($authorCandidates && $authorCandidates->length > 0) {
+            $novel['author'] = trim(preg_replace('/\s+/', ' ', $authorCandidates->item(0)->textContent));
+        }
+    }
 
     // Cover: first img under div.book
     $coverNode = $xpath->query("//div[contains(@class,'book')]//img")->item(0);
+    if (!$coverNode) {
+        $coverNode = $xpath->query("//div[contains(@class,'pic')]//img")->item(0);
+    }
     if ($coverNode instanceof DOMElement) {
         $src = $coverNode->getAttribute('src');
         if ($src) {
@@ -454,7 +495,7 @@ function novelfull_parse_novel_page(string $url, float $throttle = NOVELFULL_MIN
     }
 
     // Summary: div.desc-text, div.info
-    $summaryNodes = $xpath->query("//div[contains(@class,'desc-text')] | //div[contains(@class,'info')]");
+    $summaryNodes = $xpath->query("//div[contains(@class,'desc-text')] | //div[contains(@class,'info')] | //div[contains(@class,'m-book1')]//div[contains(@class,'txt')] | //*[@id='novel-summary-inner']");
     if ($summaryNodes && $summaryNodes->length) {
         $parts = array();
         foreach ($summaryNodes as $node) {
